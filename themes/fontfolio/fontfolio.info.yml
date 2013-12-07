@@ -1,0 +1,22 @@
+name: FontFolio
+type: theme
+description: 'FontFolio is a showcase theme for designers, artists and craft persons. This is a Drupal port of FontFolio WP theme by Marios Lublinski.'
+core: 8.x
+engine: twig
+stylesheets:
+  all:
+    - css/normalize.css
+    - css/fontfolio.css
+    - css/fontfolio-md-queries.css
+scripts:
+    - js/fontfolio.js    
+regions:
+  header: Header
+  help: Help
+  search: Search
+  content: Content  
+  sidebar_first: Sidebar  
+  footer: Footer  
+settings:
+  show_lang_links: '1'
+  hide_page_tile: '1'

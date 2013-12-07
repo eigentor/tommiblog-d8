@@ -1,0 +1,8 @@
+id: default
+uuid: b28b577b-1426-416c-923b-599f65f31aba
+label: Default
+links:
+  ac22d2cd-a554-47ae-9531-eb6412fc73ae: ac22d2cd-a554-47ae-9531-eb6412fc73ae
+  d17e71a3-3e2d-432a-b494-2055cd0647f7: d17e71a3-3e2d-432a-b494-2055cd0647f7
+status: true
+langcode: en

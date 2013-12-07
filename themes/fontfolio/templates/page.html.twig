@@ -1,0 +1,189 @@
+{#
+/**
+ * @file
+ * Default theme implementation to display a single Drupal page.
+ *
+ * The doctype, html, head and body tags are not in this template. Instead they
+ * can be found in the html.tpl.php template in this directory.
+ *
+ * Available variables:
+ *
+ * General utility variables:
+ * - base_path: The base URL path of the Drupal installation. At the very
+ *   least, this will always default to /.
+ * - directory: The directory the template is located in, e.g. modules/system
+ *   or themes/bartik.
+ * - is_front: TRUE if the current page is the front page.
+ * - logged_in: TRUE if the user is registered and signed in.
+ * - is_admin: TRUE if the user has permission to access administration pages.
+ *
+ * Site identity:
+ * - front_page: The URL of the front page. Use this instead of base_path,
+ *   when linking to the front page. This includes the language domain or
+ *   prefix.
+ * - logo: The path to the logo image, as defined in theme configuration.
+ * - site_name: The name of the site, empty when display has been disabled
+ *   in theme settings.
+ * - site_slogan: The slogan of the site, empty when display has been disabled
+ *   in theme settings.
+ *
+ * Navigation:
+ * - main_menu (array): An array containing the Main menu links for the
+ *   site, if they have been configured.
+ * - secondary_menu (array): An array containing the Secondary menu links for
+ *   the site, if they have been configured.
+ * - breadcrumb: The breadcrumb trail for the current page.
+ *
+ * Page content (in order of occurrence in the default page.tpl.php):
+ * - title_prefix (array): An array containing additional output populated by
+ *   modules, intended to be displayed in front of the main title tag that
+ *   appears in the template.
+ * - title: The page title, for use in the actual HTML content.
+ * - title_suffix (array): An array containing additional output populated by
+ *   modules, intended to be displayed after the main title tag that appears in
+ *   the template.
+ * - messages: HTML for status and error messages. Should be displayed
+ *   prominently.
+ * - tabs (array): Tabs linking to any sub-pages beneath the current page
+ *   (e.g., the view and edit tabs when displaying a node).
+ * - action_links (array): Actions local to the page, such as 'Add menu' on the
+ *   menu administration interface.
+ * - feed_icons: A string of all feed icons for the current page.
+ * - node: The node entity, if there is an automatically-loaded node
+ *   associated with the page, and the node ID is the second argument
+ *   in the page's path (e.g. node/12345 and node/12345/revisions, but not
+ *   comment/reply/12345).
+ *
+ * Regions:
+ * - page.help: Dynamic help text, mostly for admin pages.
+ * - page.highlighted: Items for the highlighted content region.
+ * - page.content: The main content of the current page.
+ * - page.sidebar_first: Items for the first sidebar.
+ * - page.sidebar_second: Items for the second sidebar.
+ * - page.header: Items for the header region.
+ * - page.footer: Items for the footer region.
+ *
+ * @see template_preprocess()
+ * @see template_preprocess_page()
+ * @see html.html.twig
+ *
+ * @ingroup themeable
+ */
+#}
+<div id="main_container">
+  <header id="header" role="banner">
+    <div class="section clearfix">
+    {% if logo is defined %}
+      <a href="{{ front_page }}" title="{{ 'Home' | t }}" rel="home" class="logo">
+        <img src="{{ logo }}" alt="{{ 'Home' | t }}"/>
+      </a>
+    {% endif %}
+    
+    {% if site_name is defined or site_slogan is defined %}
+      <div id="name-and-slogan">
+        {% if site_name is defined %}
+          {% if title %}
+            <p id="site-name"><strong>
+              <a href="{{ front_page }}" title="{{ 'Home' | t }}" rel="home"><span>{{ site_name }}</span></a>
+            </strong></p>
+          {# Use h1 when the content title is empty #}
+          {% else %}
+            <h1 id="site-name">
+              <a href="{{ front_page }}" title="{{ 'Home' | t }}" rel="home"><span>{{ site_name }}</span></a>
+            </h1>
+          {% endif %}
+        {% endif %}
+
+        {% if site_slogan is defined %}
+         <div id="site-slogan">{{ site_slogan }}</div>
+        {% endif %}
+      </div><!-- #name-and-slogan -->
+    {% endif %}
+       
+    {% if secondary_menu is defined %}
+      <nav id="header_menu">
+        <div class="section">
+          {# @TODO: this is rendered in template_preprocess_page we should call the final menu twig template here #}
+          {{ secondary_menu }}
+        </div>
+      </nav> <!-- /.section, /#header_menu -->
+    {% endif %}
+    </div>
+  </header> <!-- /.section, /#header -->
+     
+  <div id="header_top">
+    <div class="header_top_border"></div>
+    <a class="home-icon toggle" href="/"><img src="{{ base_path ~ directory }}/images/glyphicons_020_home.png"></a>
+  {% if social_links is defined %}
+    <div class="social">
+      {{ social_links }}
+      <div class="clear"></div>
+    </div><!--//social-->
+  {% endif %}
+  {% if page.search is defined %}
+    <a class="toggle-search toggle" href="#header_top"><img src="{{base_path ~ directory}}/images/glyphicons_027_search.png"></a>
+    <div class="search">
+      {{ page.search }}
+    </div><!--//search-->
+  {% endif %}
+      
+ {# @TODO: Print lang links here like done in FF d7 version #}
+ {# @TODO: find out how to create lang links in D8 #}
+     
+  {% if main_menu is defined %}
+    <a class="toggle-nav toggle" href="#header_top"><img src="{{ base_path ~ directory }}/images/icon_nav_toggle-black.gif"></a> 
+    <nav class="menu_cont">
+      <div class="social">
+        {{ social_links }}
+      </div><!--//social-->
+      {{ main_menu }}
+      {% if secondary_menu is defined %}
+        {{ secondary_menu }}
+      {% endif %}
+    </nav><!--//menu_cont-->
+  {% endif %}
+    <div class="clear"></div>
+  </div> <!-- /#header_top --> 
+
+  {% if messages  %}
+    <div id="messages">{{ messages }}</div>
+  {% endif %}
+
+  <div id="content" class="column" role="main">
+    <div class="section">
+      <a id="main-content"></a>
+      {% if tabs is defined %}<div class="tabs">{{ tabs }}</div>{% endif %}
+      {{ page.help }}
+      {% if action_links is defined %}<ul class="action-links">{{ action_links }}</ul>{% endif %}
+      {% if not is_front %}
+      {# @TODO find out how to use arg() in twig in order to know if this is not taxonomy page #}
+        <div id="single_left">
+      {% endif %}
+      {{ title_prefix }}
+      {% if title is defined %}<h1 class="title" id="page-title">{{ title }}</h1>{% endif %}
+      {{ title_suffix }}
+      {% if tabs is defined %}<div class="tabs">{{ tabs }}</div>{% endif %}
+      {{ page.content }}
+      {{ feed_icons }}
+      
+      {% if not is_front %}
+        {# @TODO find out how to use arg() in twig in order to know if this is not taxonomy page #}
+        </div><!-- /single_left -->
+        {% if page.sidebar_first %}
+          <aside id="sidebar" class="column sidebar">
+            <section class="section">
+          {{ page.sidebar_first }}
+            </section>
+          </aside> <!-- /.section, /#sidebar-first -->
+        {% endif %}
+      {% endif %}
+    </div>
+  </div> <!-- /.section, /#content -->
+
+  <footer id="footer">
+    <section class="section">
+      {{ page.footer }}
+    </section>
+  </footer> <!-- /.section, /#footer -->
+
+</div> <!-- /#main_container -->

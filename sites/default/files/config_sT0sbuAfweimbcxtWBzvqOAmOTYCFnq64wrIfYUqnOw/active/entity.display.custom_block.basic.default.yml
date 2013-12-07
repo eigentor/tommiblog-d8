@@ -1,0 +1,12 @@
+id: custom_block.basic.default
+uuid: 43bc3e02-ce39-41f1-b3fb-7a9074f52cc0
+targetEntityType: custom_block
+bundle: basic
+mode: default
+content:
+  body:
+    label: hidden
+    type: text_default
+    weight: 0
+    settings: {  }
+status: true

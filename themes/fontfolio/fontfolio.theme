@@ -1,0 +1,146 @@
+<?php
+  
+/**
+ * @file
+ * Functions to support theming in the Bartik theme.
+ */
+
+/**
+ * Implements hook_process_HOOK() for page.tpl.php.
+ */
+function fontfolio_process_page(&$variables) {
+  $site_config = config('system.site');
+  // Always print the site name and slogan, but if they are toggled off, we'll
+  // just hide them visually.
+  $variables['hide_site_name']   = theme_get_setting('toggle_name') ? FALSE : TRUE;
+  $variables['hide_site_slogan'] = theme_get_setting('toggle_slogan') ? FALSE : TRUE;
+  if ($variables['hide_site_name']) {
+    // If toggle_name is FALSE, the site_name will be empty, so we rebuild it.
+    $variables['site_name'] = check_plain($site_config->get('name'));
+  }
+  if ($variables['hide_site_slogan']) {
+    // If toggle_site_slogan is FALSE, the site_slogan will be empty, so we rebuild it.
+    $variables['site_slogan'] = filter_xss_admin($site_config->get('slogan'));
+  }
+  // Since the title and the shortcut link are both block level elements,
+  // positioning them next to each other is much simpler with a wrapper div.
+  if (!empty($variables['title_suffix']['add_or_remove_shortcut']) && $variables['title']) {
+    // Add a wrapper div using the title_prefix and title_suffix render elements.
+    $variables['title_prefix']['shortcut_wrapper'] = array(
+      '#markup' => '<div class="shortcut-wrapper clearfix">',
+      '#weight' => 100,
+    );
+    $variables['title_suffix']['shortcut_wrapper'] = array(
+      '#markup' => '</div>',
+      '#weight' => -99,
+    );
+    // Make sure the shortcut link is the first item in title_suffix.
+    $variables['title_suffix']['add_or_remove_shortcut']['#weight'] = -100;
+  }
+}
+
+/**
+ * Implements hook_process_HOOK() for page.tpl.php.
+ */
+function fontfolio_preprocess_page(&$variables) {
+  // Make FontFolio theme settings into insertable variables.
+  $social['facebook'] = theme_get_setting('facebook');
+  $social['twitter']  = theme_get_setting('twitter');
+  $social['plus']     = theme_get_setting('plus');
+  $social['dribble']  = theme_get_setting('dribble');
+  $variables['social_links'] = '';
+  $options['html'] = TRUE;
+  foreach ($social as $key => $value) {
+    if ($value != '') {
+   // dpm($value);
+      $imgvariables['uri'] = drupal_get_path('theme', 'fontfolio') . '/images/' . $key . '-icon.png';
+      $imgvariables['attributes']['class'] = array($key);
+      if ($key == 'plus') {
+        $key = 'Google+';
+      }
+      $imgvariables['alt'] = t("@site_name's at @social_network", array(
+        '@social_network' => $key,
+        '@site_name' => $variables['site_name'],
+      ));
+     // dpm($imgvariables);
+      $icon = theme('image', $imgvariables);
+     // dpm($icon);
+      $variables['social_links'] .= l($icon, $value, $options);
+    }
+  }
+
+  // Show page title on taxonomy term pages?
+  if (arg(0) == 'taxonomy' && arg(1) == 'term' && theme_get_setting('hide_page_tile') == 1) {
+    $variables['title'] = '';
+  }  
+  }
+
+/**
+ * Implements hook_preprocess_HOOK() for maintenance-page.tpl.php.
+ */
+function fontfolio_preprocess_maintenance_page(&$variables) {
+  // By default, site_name is set to Drupal if no db connection is available
+  // or during site installation. Setting site_name to an empty string makes
+  // the site and update pages look cleaner.
+  // @see template_preprocess_maintenance_page
+  if (!$variables['db_is_active']) {
+    $variables['site_name'] = '';
+  }
+  drupal_add_css(drupal_get_path('theme', 'fontfolio') . '/css/maintenance-page.css');
+}
+
+/**
+ * Implements hook_process_HOOK() for maintenance-page.tpl.php.
+ */
+function fontfolio_process_maintenance_page(&$variables) {
+  $site_config = config('system.site');
+  // Always print the site name and slogan, but if they are toggled off, we'll
+  // just hide them visually.
+  $variables['hide_site_name']   = theme_get_setting('toggle_name') ? FALSE : TRUE;
+  $variables['hide_site_slogan'] = theme_get_setting('toggle_slogan') ? FALSE : TRUE;
+  if ($variables['hide_site_name']) {
+    // If toggle_name is FALSE, the site_name will be empty, so we rebuild it.
+    $variables['site_name'] = check_plain($site_config->get('name'));
+  }
+  if ($variables['hide_site_slogan']) {
+    // If toggle_site_slogan is FALSE, the site_slogan will be empty, so we rebuild it.
+    $variables['site_slogan'] = filter_xss_admin($site_config->get('slogan'));
+  }
+}
+
+/**
+ * Implements theme_menu_tree().
+ */
+function fontfolio_menu_tree($variables) {
+  return '<ul class="menu clearfix">' . $variables['tree'] . '</ul>';
+}
+
+/**
+ * Implements theme_field__field_type().
+
+function fontfolio_field__taxonomy_term_reference($variables) {
+  $output = '';
+
+  // Render the label, if it's not hidden.
+  if (!$variables['label_hidden']) {
+    $output .= '<h3 class="field-label">' . $variables['label'] . ': </h3>';
+  }
+
+  // Render the items.
+  $output .= ($variables['element']['#label_display'] == 'inline') ? '<ul class="links inline">' : '<ul class="links">';
+  foreach ($variables['items'] as $delta => $item) {
+    $output .= '<li class="taxonomy-term-reference-' . $delta . '"' . $variables['item_attributes'][$delta] . '>' . drupal_render($item) . '</li>';
+  }
+  $output .= '</ul>';
+
+  // Render the top-level DIV.
+  $variables['attributes']['class'][] = 'clearfix';
+  $output = '<div ' . $variables['attributes'] . '>' . $output . '</div>';
+
+  return $output;
+}
+ */
+function fontfolio_form_alter(&$form, &$form_state, $form_id) {
+  //print $form_id;
+  //dpm($form_id);
+  }

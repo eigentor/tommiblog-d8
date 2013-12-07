@@ -1,0 +1,10 @@
+name: 'Tommiblog Drupal 8'
+mail: info@rufzeichen-online.de
+slogan: ''
+page:
+  403: ''
+  404: ''
+  front: node
+admin_compact_mode: false
+weight_select_max: 100
+langcode: en
