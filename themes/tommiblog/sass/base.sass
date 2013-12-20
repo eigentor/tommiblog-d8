@@ -1,4 +1,26 @@
 @import "variables-mixins.sass"
 
+
+body 
+  $color: $base-font-color
+
+/* Headlines */
+
 h1, h2, h3, h4, h5, h6 
   font-family: $font-family-headlines
+  color: $headline-color
+
+
+/*** Standard HTML Elements ***/
+
+a 
+  color: $link-color
+  text-decoration: none
+  &:hover 
+    color: darken($link-color, 15%)
+
+/** Drupal-specific Elements **/
+code 
+  margin-bottom: 10px
+
+
