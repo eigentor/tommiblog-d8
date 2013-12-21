@@ -7,5 +7,9 @@ core: 8.x
 stylesheets:
   all:
     - font_face/renamed/renamed.css
+    - font_face/colaborate_light/stylesheet.css
+    - font_face/colaborate_thin/stylesheet.css
+    - font_face/colaborate_regular/stylesheet.css
     - css/layout-old.css
+    - css/layout.css
     - css/base.css

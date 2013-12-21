@@ -1,0 +1,17 @@
+/*Base layout of the page */
+@media -sass-debug-info{filename{font-family:file\:\/\/\/cygdrive\/f\/wamp\/www\/rufzeichen\/tommiblog-d8-2\/themes\/tommiblog\/sass\/layout\.sass}line{font-family:\000034}}
+.l-container {
+  *zoom: 1;
+  max-width: 926px;
+  _width: 926px;
+  padding-left: 40px;
+  padding-right: 40px;
+  margin-left: auto;
+  margin-right: auto;
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/usr\/lib\/ruby\/gems\/1\.9\.1\/gems\/compass-0\.12\.2\/frameworks\/compass\/stylesheets\/compass\/utilities\/general\/_clearfix\.scss}line{font-family:\0000338}}
+.l-container:after {
+  content: "";
+  display: table;
+  clear: both;
+}
