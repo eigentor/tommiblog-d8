@@ -6,10 +6,13 @@ version: VERSION
 core: 8.x
 stylesheets:
   all:
-    - font_face/renamed/renamed.css
-    - font_face/colaborate_light/stylesheet.css
-    - font_face/colaborate_thin/stylesheet.css
-    - font_face/colaborate_regular/stylesheet.css
+    - font_face/vag_handwritten/vag-handwritten.css
+    - font_face/oswald/oswald.css
+    - font_face/fira_sans/fira-sans.css
+    - font_face/source_sans_pro/source-sans-pro.css
+    - font_face/colaborate/colaborate_light/colaborate-light.css
+    - font_face/colaborate/colaborate_thin/colaborate-thin.css
+    - font_face/colaborate/colaborate_regular/colaborate-regular.css
     - css/layout-old.css
     - css/layout.css
     - css/base.css

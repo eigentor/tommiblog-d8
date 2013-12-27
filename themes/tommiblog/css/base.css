@@ -1,23 +1,38 @@
+@media -sass-debug-info{filename{font-family:file\:\/\/\/cygdrive\/f\/wamp\/www\/rufzeichen\/tommiblog-d8-2\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\000034}}
+body {
+  color: #444444;
+  font-family: source_sans_proregular, arial, helvetica, sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.002em;
+  line-height: 1.6;
+}
+
 /* Headlines */
-@media -sass-debug-info{filename{font-family:file\:\/\/\/cygdrive\/f\/wamp\/www\/rufzeichen\/tommiblog-d8-2\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\000039}}
-h1, h2, h3, h4, h5, h6 {
-  font-family: renamedbook, times, serif;
+@media -sass-debug-info{filename{font-family:file\:\/\/\/cygdrive\/f\/wamp\/www\/rufzeichen\/tommiblog-d8-2\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000313}}
+h1, h2, h3, h4, h5, h6, h1 a, h2 a, h3 a, h4 a, h4 a, h6 a {
+  font-family: oswaldbook, arial, helvetica, sans-serif;
   color: black;
+  letter-spacing: 0.01em;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/\/cygdrive\/f\/wamp\/www\/rufzeichen\/tommiblog-d8-2\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000318}}
+h1.site-name {
+  font-family: vag-handwrittenregular, times, serif;
 }
 
 /** Standard HTML Elements ** */
-@media -sass-debug-info{filename{font-family:file\:\/\/\/cygdrive\/f\/wamp\/www\/rufzeichen\/tommiblog-d8-2\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000316}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/cygdrive\/f\/wamp\/www\/rufzeichen\/tommiblog-d8-2\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000324}}
 a {
   color: #6bcbca;
   text-decoration: none;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/\/cygdrive\/f\/wamp\/www\/rufzeichen\/tommiblog-d8-2\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000319}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/cygdrive\/f\/wamp\/www\/rufzeichen\/tommiblog-d8-2\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000327}}
 a:hover {
   color: #3dadac;
 }
 
 /*Drupal-specific Elements */
-@media -sass-debug-info{filename{font-family:file\:\/\/\/cygdrive\/f\/wamp\/www\/rufzeichen\/tommiblog-d8-2\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000323}}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/cygdrive\/f\/wamp\/www\/rufzeichen\/tommiblog-d8-2\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000331}}
 code {
   margin-bottom: 10px;
 }
