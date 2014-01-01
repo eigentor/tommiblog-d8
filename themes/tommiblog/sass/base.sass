@@ -1,5 +1,8 @@
 @import "variables-mixins.sass"
 
+html, body 
+  margin: 0
+  padding: 0
 
 body 
   color: $base-font-color
@@ -14,13 +17,15 @@ h1, h2, h3, h4, h5, h6, h1 a, h2 a, h3 a, h4 a, h4 a, h6 a
   font-family: $font-family-headlines
   color: $headline-color
   letter-spacing: 0.01em
+  margin-top: 0 
+  margin-bottom: 0.5em
+  line-height: 1.3
 
 h1.site-name, h1.site-name a
   font-family: $font-family-handwritten
   font-size: 2.7em
   color: #9B1414
   line-height: 1
-  margin-top: 10px
 
 
 /*** Standard HTML Elements ***/
@@ -29,11 +34,16 @@ a
   color: $link-color
   text-decoration: none
   &:hover 
-    color: darken($link-color, 15%)
+    color: $link-color
 
 /** Drupal-specific Elements **/
 code 
   margin-bottom: 10px
+
+.submitted 
+  color: #999
+  font-family: $font-family-headlines-thin
+  margin: 3px 0 7px
 
 
 /*-------------------------------------------*/
@@ -45,3 +55,12 @@ code
 
 body
   +at-breakpoint($breakpoint-desktop-with-ie-fallback)
+
+
+    /* Headlines */
+    h2 
+      font-size: 2.1em
+
+    article 
+      h2 
+        margin-bottom: 2px

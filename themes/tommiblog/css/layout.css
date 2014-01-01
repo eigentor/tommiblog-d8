@@ -21,3 +21,13 @@
 /*-------------- DESKTOP LAYOUT ------------- */
 /*------------------------------------------- */
 /*------------------------------------------- */
+@media (min-width: 750px) {
+@media -sass-debug-info{filename{font-family:file\:\/\/\/cygdrive\/f\/wamp\/www\/rufzeichen\/tommiblog-d8-2\/themes\/tommiblog\/sass\/layout\.sass}line{font-family:\0000318}}
+  body header {
+    margin-top: 20px;
+  }
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/\/cygdrive\/f\/wamp\/www\/rufzeichen\/tommiblog-d8-2\/themes\/tommiblog\/sass\/layout\.sass}line{font-family:\0000318}}
+.lt-ie9 body header {
+  margin-top: 20px;
+}
