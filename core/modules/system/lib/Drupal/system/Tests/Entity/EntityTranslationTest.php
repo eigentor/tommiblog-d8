@@ -7,7 +7,6 @@
 
 namespace Drupal\system\Tests\Entity;
 
-use Drupal\Component\Utility\MapArray;
 use Drupal\Core\Language\Language;
 use Drupal\entity_test\Entity\EntityTestMulRev;
 
@@ -43,7 +42,7 @@ class EntityTranslationTest extends EntityLanguageTestBase {
   protected function _testEntityLanguageMethods($entity_type) {
     $entity = entity_create($entity_type, array(
       'name' => 'test',
-      'user_id' => $GLOBALS['user']->id(),
+      'user_id' => $this->container->get('current_user')->id(),
     ));
     $this->assertEqual($entity->language()->id, Language::LANGCODE_NOT_SPECIFIED, format_string('%entity_type: Entity language not specified.', array('%entity_type' => $entity_type)));
     $this->assertFalse($entity->getTranslationLanguages(FALSE), format_string('%entity_type: No translations are available', array('%entity_type' => $entity_type)));
@@ -73,7 +72,7 @@ class EntityTranslationTest extends EntityLanguageTestBase {
     $default_langcode = $this->langcodes[0];
     $entity->langcode->value = $default_langcode;
     $entity->{$this->field_name} = array();
-    $this->assertEqual($entity->language(), language_load($this->langcodes[0]), format_string('%entity_type: Entity language retrieved.', array('%entity_type' => $entity_type)));
+    $this->assertEqual($entity->language(), \Drupal::languageManager()->getLanguage($this->langcodes[0]), format_string('%entity_type: Entity language retrieved.', array('%entity_type' => $entity_type)));
     $this->assertFalse($entity->getTranslationLanguages(FALSE), format_string('%entity_type: No translations are available', array('%entity_type' => $entity_type)));
 
     // Set the value in default language.
@@ -94,7 +93,7 @@ class EntityTranslationTest extends EntityLanguageTestBase {
     $this->assertEqual($field->value, 'default value', 'Untranslated value stays.');
     $this->assertEqual($field->getLangcode(), $default_langcode, 'Untranslated value has the expected langcode.');
 
-    $translations[$this->langcodes[1]] = language_load($this->langcodes[1]);
+    $translations[$this->langcodes[1]] = \Drupal::languageManager()->getLanguage($this->langcodes[1]);
     $this->assertEqual($entity->getTranslationLanguages(FALSE), $translations, 'Translations retrieved.');
 
     // Try to get a not available translation.
@@ -206,7 +205,10 @@ class EntityTranslationTest extends EntityLanguageTestBase {
           'user_id' => array(0 => $uid),
         );
       }
-      $entity->getTranslation($langcode)->setPropertyValues($properties[$langcode]);
+      $translation = $entity->getTranslation($langcode);
+      foreach ($properties[$langcode] as $field_name => $values) {
+        $translation->set($field_name, $values);
+      }
     }
     $entity->save();
 
@@ -293,7 +295,7 @@ class EntityTranslationTest extends EntityLanguageTestBase {
     $default_langcode = $this->langcodes[0];
     $langcode = $this->langcodes[1];
     $entity = $this->entityManager
-      ->getStorageController('entity_test_mul')
+      ->getStorage('entity_test_mul')
       ->create(array('name' => $this->randomName()));
 
     $entity->save();
@@ -432,8 +434,8 @@ class EntityTranslationTest extends EntityLanguageTestBase {
 
     // Check that per-language defaults are properly populated.
     $entity = $this->reloadEntity($entity);
-    $instance_id = implode('.', array($entity->entityType(), $entity->bundle(), $this->field_name));
-    $instance = $this->entityManager->getStorageController('field_instance')->load($instance_id);
+    $instance_id = implode('.', array($entity->getEntityTypeId(), $entity->bundle(), $this->field_name));
+    $instance = $this->entityManager->getStorage('field_instance_config')->load($instance_id);
     $instance->default_value_function = 'entity_test_field_default_value';
     $instance->save();
     $translation = $entity->addTranslation($langcode2);
@@ -446,7 +448,7 @@ class EntityTranslationTest extends EntityLanguageTestBase {
    * Tests language fallback applied to field and entity translations.
    */
   function testLanguageFallback() {
-    $current_langcode = $this->container->get('language_manager')->getLanguage(Language::TYPE_CONTENT)->id;
+    $current_langcode = $this->languageManager->getCurrentLanguage(Language::TYPE_CONTENT)->id;
     $this->langcodes[] = $current_langcode;
 
     $values = array();
@@ -460,7 +462,7 @@ class EntityTranslationTest extends EntityLanguageTestBase {
     $langcode2 = $this->langcodes[2];
 
     $entity_type = 'entity_test_mul';
-    $controller = $this->entityManager->getStorageController($entity_type);
+    $controller = $this->entityManager->getStorage($entity_type);
     $entity = $controller->create(array('langcode' => $default_langcode) + $values[$default_langcode]);
     $entity->save();
 
@@ -473,7 +475,7 @@ class EntityTranslationTest extends EntityLanguageTestBase {
     $this->assertEqual($translation->language()->id, $default_langcode, 'The current translation language matches the expected one.');
 
     // Check that language fallback respects language weight by default.
-    $languages = language_list();
+    $languages = $this->languageManager->getLanguages();
     $languages[$langcode]->weight = -1;
     language_save($languages[$langcode]);
     $translation = $this->entityManager->getTranslationFromContext($entity, $langcode2);
@@ -495,7 +497,7 @@ class EntityTranslationTest extends EntityLanguageTestBase {
     $controller = $this->entityManager->getViewBuilder($entity_type);
     $build = $controller->view($entity);
     $this->assertEqual($build['label']['#markup'], $values[$current_langcode]['name'], 'By default the entity is rendered in the current language.');
-    $langcodes = MapArray::copyValuesToKeys($this->langcodes);
+    $langcodes = array_combine($this->langcodes, $this->langcodes);
     // We have no translation for the $langcode2 langauge, hence the expected
     // result is the topmost existing translation, that is $langcode.
     $langcodes[$langcode2] = $langcode;
@@ -514,18 +516,18 @@ class EntityTranslationTest extends EntityLanguageTestBase {
     $entity_type = 'entity_test_mulrev';
     $this->state->set('entity_test.field_definitions.translatable', array('name' => FALSE));
     $this->entityManager->clearCachedFieldDefinitions();
-    $definitions = $this->entityManager->getFieldDefinitions($entity_type);
-    $this->assertFalse($definitions['name']->isFieldTranslatable(), 'Field translatability can be disabled programmatically.');
+    $definitions = $this->entityManager->getBaseFieldDefinitions($entity_type);
+    $this->assertFalse($definitions['name']->isTranslatable(), 'Field translatability can be disabled programmatically.');
 
     $this->state->set('entity_test.field_definitions.translatable', array('name' => TRUE));
     $this->entityManager->clearCachedFieldDefinitions();
-    $definitions = $this->entityManager->getFieldDefinitions($entity_type);
-    $this->assertTrue($definitions['name']->isFieldTranslatable(), 'Field translatability can be enabled programmatically.');
+    $definitions = $this->entityManager->getBaseFieldDefinitions($entity_type);
+    $this->assertTrue($definitions['name']->isTranslatable(), 'Field translatability can be enabled programmatically.');
 
     // Check that field translatability is disabled by default.
-    $base_field_definitions = EntityTestMulRev::baseFieldDefinitions($entity_type);
+    $base_field_definitions = EntityTestMulRev::baseFieldDefinitions($this->entityManager->getDefinition($entity_type));
     $this->assertTrue(!isset($base_field_definitions['id']->translatable), 'Translatability for the <em>id</em> field is not defined.');
-    $this->assertFalse($definitions['id']->isFieldTranslatable(), 'Field translatability is disabled by default.');
+    $this->assertFalse($definitions['id']->isTranslatable(), 'Field translatability is disabled by default.');
 
     // Check that entity ids and langcode fields cannot be translatable.
     foreach (array('id', 'uuid', 'revision_id', 'type', 'langcode') as $name) {
@@ -534,7 +536,7 @@ class EntityTranslationTest extends EntityLanguageTestBase {
       $message = format_string('Field %field cannot be translatable.', array('%field' => $name));
 
       try {
-        $definitions = $this->entityManager->getFieldDefinitions($entity_type);
+        $this->entityManager->getBaseFieldDefinitions($entity_type);
         $this->fail($message);
       }
       catch (\LogicException $e) {
@@ -548,7 +550,7 @@ class EntityTranslationTest extends EntityLanguageTestBase {
    */
   public function testLanguageChange() {
     $entity_type = 'entity_test_mul';
-    $controller = $this->entityManager->getStorageController($entity_type);
+    $controller = $this->entityManager->getStorage($entity_type);
     $langcode = $this->langcodes[0];
 
     // check that field languages match entity language regardless of field

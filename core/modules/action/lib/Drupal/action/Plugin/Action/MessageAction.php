@@ -8,8 +8,6 @@
 namespace Drupal\action\Plugin\Action;
 
 use Drupal\Component\Utility\Xss;
-use Drupal\Core\Annotation\Action;
-use Drupal\Core\Annotation\Translation;
 use Drupal\Core\Action\ConfigurableActionBase;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Utility\Token;
@@ -34,7 +32,7 @@ class MessageAction extends ConfigurableActionBase implements ContainerFactoryPl
   /**
    * Constructs a MessageAction object.
    */
-  public function __construct(array $configuration, $plugin_id, array $plugin_definition, Token $token) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, Token $token) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
     $this->token = $token;
@@ -43,7 +41,7 @@ class MessageAction extends ConfigurableActionBase implements ContainerFactoryPl
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, array $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static($configuration, $plugin_id, $plugin_definition, $container->get('token'));
   }
 

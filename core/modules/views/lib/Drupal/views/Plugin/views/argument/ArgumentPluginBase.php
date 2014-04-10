@@ -7,6 +7,8 @@
 
 namespace Drupal\views\Plugin\views\argument;
 
+use Drupal\Component\Utility\String as UtilityString;
+use Drupal\Core\Render\Element;
 use Drupal\views\Plugin\views\PluginBase;
 use Drupal\views\Plugin\views\display\DisplayPluginBase;
 use Drupal\views\ViewExecutable;
@@ -155,6 +157,7 @@ abstract class ArgumentPluginBase extends HandlerBase {
     $form['no_argument'] = array(
       '#type' => 'details',
       '#title' => $argument_text['filter value not present'],
+      '#open' => TRUE,
     );
     // Everything in the details is floated, so the last element needs to
     // clear those floats.
@@ -174,7 +177,6 @@ abstract class ArgumentPluginBase extends HandlerBase {
     $form['exception'] = array(
       '#type' => 'details',
       '#title' => t('Exceptions'),
-      '#collapsed' => TRUE,
       '#fieldset' => 'no_argument',
     );
     $form['exception']['value'] = array(
@@ -220,6 +222,7 @@ abstract class ArgumentPluginBase extends HandlerBase {
     $form['argument_present'] = array(
       '#type' => 'details',
       '#title' => $argument_text['filter value present'],
+      '#open' => TRUE,
     );
     $form['title_enable'] = array(
       '#type' => 'checkbox',
@@ -864,7 +867,7 @@ abstract class ArgumentPluginBase extends HandlerBase {
     if (empty($value) && !empty($this->definition['empty field name'])) {
       $value = $this->definition['empty field name'];
     }
-    return check_plain($value);
+    return UtilityString::checkPlain($value);
   }
 
   /**
@@ -883,7 +886,7 @@ abstract class ArgumentPluginBase extends HandlerBase {
    * This usually needs to be overridden to provide a proper title.
    */
   function title() {
-    return check_plain($this->argument);
+    return UtilityString::checkPlain($this->argument);
   }
 
   /**
@@ -1093,7 +1096,7 @@ abstract class ArgumentPluginBase extends HandlerBase {
    * to the 'default_options' fieldset.
    */
   public static function preRenderMoveArgumentOptions($form) {
-    foreach (element_children($form) as $key) {
+    foreach (Element::children($form) as $key) {
       $element = $form[$key];
       if (!empty($element['#argument_option'])) {
         $container_name = $element['#argument_option'] . '_options';

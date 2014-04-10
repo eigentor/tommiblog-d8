@@ -7,17 +7,19 @@
 
 namespace Drupal\views\Tests;
 
-use Drupal\views\ViewStorageController;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Config\Entity\ConfigEntityStorage;
 use Drupal\views\Entity\View;
 use Drupal\views\Plugin\views\display\Page;
 use Drupal\views\Plugin\views\display\DefaultDisplay;
 use Drupal\views\Plugin\views\display\Feed;
+use Drupal\views\Views;
 
 /**
- * Tests the functionality of View and ViewStorageController.
+ * Tests the functionality of View and ConfigEntityStorage.
  *
  * @see \Drupal\views\Entity\View
- * @see \Drupal\views\ViewStorageController
+ * @see \Drupal\Core\Config\Entity\ConfigEntityStorage
  */
 class ViewStorageTest extends ViewUnitTestBase {
 
@@ -39,16 +41,16 @@ class ViewStorageTest extends ViewUnitTestBase {
   );
 
   /**
-   * The configuration entity information from entity_get_info().
+   * The entity type definition.
    *
-   * @var array
+   * @var \Drupal\Core\Entity\EntityTypeInterface
    */
-  protected $info;
+  protected $entityType;
 
   /**
-   * The configuration entity storage controller.
+   * The configuration entity storage.
    *
-   * @var \Drupal\views\ViewStorageController
+   * @var \Drupal\Core\Config\Entity\ConfigEntityStorage
    */
   protected $controller;
 
@@ -71,15 +73,12 @@ class ViewStorageTest extends ViewUnitTestBase {
    * Tests CRUD operations.
    */
   function testConfigurationEntityCRUD() {
-    // Get the configuration entity information and controller.
-    $this->info = entity_get_info('view');
-    $this->controller = $this->container->get('entity.manager')->getStorageController('view');
+    // Get the configuration entity type and controller.
+    $this->entityType = \Drupal::entityManager()->getDefinition('view');
+    $this->controller = $this->container->get('entity.manager')->getStorage('view');
 
     // Confirm that an info array has been returned.
-    $this->assertTrue(!empty($this->info) && is_array($this->info), 'The View info array is loaded.');
-
-    // Confirm we have the correct controller class.
-    $this->assertTrue($this->controller instanceof ViewStorageController, 'The correct controller is loaded.');
+    $this->assertTrue($this->entityType instanceof EntityTypeInterface, 'The View info array is loaded.');
 
     // CRUD tests.
     $this->loadTests();
@@ -122,7 +121,7 @@ class ViewStorageTest extends ViewUnitTestBase {
     }
 
     // Make sure that loaded default views get a UUID.
-    $view = views_get_view('test_view_storage');
+    $view = Views::getView('test_view_storage');
     $this->assertTrue($view->storage->uuid());
   }
 
@@ -141,6 +140,8 @@ class ViewStorageTest extends ViewUnitTestBase {
 
     // Create a new View instance with config values.
     $values = \Drupal::config('views.view.test_view_storage')->get();
+    $values['id'] = 'test_view_storage_new';
+    unset($values['uuid']);
     $created = $this->controller->create($values);
 
     $this->assertTrue($created instanceof View, 'Created object is a View.');
@@ -156,7 +157,6 @@ class ViewStorageTest extends ViewUnitTestBase {
     }
 
     // Check the UUID of the loaded View.
-    $created->set('id', 'test_view_storage_new');
     $created->save();
     $created_loaded = entity_load('view', 'test_view_storage_new');
     $this->assertIdentical($created->uuid(), $created_loaded->uuid(), 'The created UUID has been saved correctly.');
@@ -240,6 +240,17 @@ class ViewStorageTest extends ViewUnitTestBase {
     $display = $view->get('display');
     $this->assertEqual($display[$id]['display_title'], 'Page 3');
 
+    // Ensure the 'default' display always has position zero, regardless of when
+    // it was created relative to other displays.
+    $displays = $view->get('display');
+    $displays['default']['deleted'] = TRUE;
+    $view->set('display', $displays);
+    $view->set('id', $this->randomName());
+    $view->save();
+    $view->addDisplay('default', $random_title);
+    $displays = $view->get('display');
+    $this->assertEqual($displays['default']['position'], 0, 'Default displays are always in position zero');
+
     // Tests Drupal\views\Entity\View::generateDisplayId().
     // @todo Sadly this method is not public so it cannot be tested.
     // $view = $this->controller->create(array());
@@ -255,11 +266,11 @@ class ViewStorageTest extends ViewUnitTestBase {
 
     $display_id = 'default';
     $expected_items = array();
-    // Tests addItem with getItem.
+    // Tests addHandler with getItem.
     // Therefore add one item without any optioins and one item with some
     // options.
-    $id1 = $view->addItem($display_id, 'field', 'views_test_data', 'id');
-    $item1 = $view->getItem($display_id, 'field', 'id');
+    $id1 = $view->addHandler($display_id, 'field', 'views_test_data', 'id');
+    $item1 = $view->getHandler($display_id, 'field', 'id');
     $expected_items[$id1] = $expected_item = array(
       'id' => 'id',
       'table' => 'views_test_data',
@@ -274,8 +285,8 @@ class ViewStorageTest extends ViewUnitTestBase {
         'text' => $this->randomName()
       )
     );
-    $id2 = $view->addItem($display_id, 'field', 'views_test_data', 'name', $options);
-    $item2 = $view->getItem($display_id, 'field', 'name');
+    $id2 = $view->addHandler($display_id, 'field', 'views_test_data', 'name', $options);
+    $item2 = $view->getHandler($display_id, 'field', 'name');
     $expected_items[$id2] = $expected_item = array(
       'id' => 'name',
       'table' => 'views_test_data',
@@ -286,7 +297,7 @@ class ViewStorageTest extends ViewUnitTestBase {
     $this->assertEqual($item2, $expected_item);
 
     // Tests the expected fields from the previous additions.
-    $this->assertEqual($view->getItems('field', $display_id), $expected_items);
+    $this->assertEqual($view->getHandlers('field', $display_id), $expected_items);
 
     // Alter an existing item via setItem and check the result via getItem
     // and getItems.
@@ -296,21 +307,21 @@ class ViewStorageTest extends ViewUnitTestBase {
       )
     ) + $item1;
     $expected_items[$id1] = $item;
-    $view->setItem($display_id, 'field', $id1, $item);
-    $this->assertEqual($view->getItem($display_id, 'field', 'id'), $item);
-    $this->assertEqual($view->getItems('field', $display_id), $expected_items);
+    $view->setHandler($display_id, 'field', $id1, $item);
+    $this->assertEqual($view->getHandler($display_id, 'field', 'id'), $item);
+    $this->assertEqual($view->getHandlers('field', $display_id), $expected_items);
 
     // Test removeItem method.
     unset($expected_items[$id2]);
-    $view->removeItem($display_id, 'field', $id2);
-    $this->assertEqual($view->getItems('field', $display_id), $expected_items);
+    $view->removeHandler($display_id, 'field', $id2);
+    $this->assertEqual($view->getHandlers('field', $display_id), $expected_items);
   }
 
   /**
    * Tests the createDuplicate() View method.
    */
   public function testCreateDuplicate() {
-    $view = views_get_view('test_view_storage');
+    $view = Views::getView('test_view_storage');
     $copy = $view->storage->createDuplicate();
 
     $this->assertTrue($copy instanceof View, 'The copied object is a View.');

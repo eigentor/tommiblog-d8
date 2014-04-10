@@ -14,7 +14,8 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  * @return \Symfony\Component\HttpFoundation\Response
  *   A Response object.
  *
- * @deprecated Use \Drupal\xmlrpc\Controller\XmlrpcController::php()
+ * @deprecated in Drupal 8.x-dev, will be removed before Drupal 8.0.
+ *   Use \Drupal\xmlrpc\Controller\XmlrpcController::php().
  */
 function xmlrpc_server_page() {
   module_load_include('inc', 'xmlrpc');
@@ -64,7 +65,7 @@ function xmlrpc_server($callbacks) {
   // with those defined by modules implementing the _xmlrpc hook.
   // Built-in methods are overridable.
   $callbacks = array_merge($defaults, (array) $callbacks);
-  drupal_alter('xmlrpc', $callbacks);
+  \Drupal::moduleHandler()->alter('xmlrpc', $callbacks);
   foreach ($callbacks as $key => $callback) {
     // we could check for is_array($callback)
     if (is_int($key)) {
@@ -215,7 +216,8 @@ function xmlrpc_server_call($xmlrpc_server, $methodname, $args) {
   // If the method has a signature, validate the request against the signature
   if (is_array($signature)) {
     $ok = TRUE;
-    $return_type = array_shift($signature);
+    // Remove first element of $signature which is the unused 'return type'.
+    array_shift($signature);
     // Check the number of arguments
     if (count($args) != count($signature)) {
       return xmlrpc_error(-32602, t('Server error. Wrong number of method parameters.'));

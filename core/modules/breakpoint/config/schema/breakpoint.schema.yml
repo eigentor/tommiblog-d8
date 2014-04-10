@@ -25,7 +25,7 @@ breakpoint.breakpoint.*.*.*:
       type: string
       label: 'Source type'
     weight:
-      type: string
+      type: integer
       label: 'Weight'
     multipliers:
       type: sequence
@@ -36,6 +36,12 @@ breakpoint.breakpoint.*.*.*:
     langcode:
       type: string
       label: 'Default language'
+    status:
+      type: boolean
+      label: 'Enabled'
+    dependencies:
+      type: config_dependencies
+      label: 'Dependencies'
 
 breakpoint.breakpoint_group.*.*.*:
   type: mapping
@@ -53,7 +59,7 @@ breakpoint.breakpoint_group.*.*.*:
     label:
       type: string
       label: 'Label'
-    breakpoints:
+    breakpoint_ids:
       type: sequence
       label: 'Breakpoints'
       sequence:
@@ -65,3 +71,12 @@ breakpoint.breakpoint_group.*.*.*:
     sourceType:
       type: string
       label: 'Group source type'
+    langcode:
+      type: string
+      label: 'Default language'
+    status:
+      type: boolean
+      label: 'Enabled'
+    dependencies:
+      type: config_dependencies
+      label: 'Dependencies'

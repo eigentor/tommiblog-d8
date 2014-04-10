@@ -8,7 +8,6 @@
 namespace Drupal\views\Plugin\views\field;
 
 use Drupal\views\Plugin\views\field\FieldPluginBase;
-use Drupal\Component\Annotation\PluginID;
 use Drupal\views\ResultRow;
 
 /**
@@ -16,7 +15,7 @@ use Drupal\views\ResultRow;
  *
  * @ingroup views_field_handlers
  *
- * @PluginID("xss")
+ * @ViewsField("xss")
  */
 class Xss extends FieldPluginBase {
 

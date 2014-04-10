@@ -32,20 +32,6 @@ function config_translation_help($path) {
 }
 
 /**
- * Implements hook_menu().
- */
-function config_translation_menu() {
-  $items = array();
-  $items['admin/config/regional/config-translation'] = array(
-    'title' => 'Configuration translation',
-    'description' => 'Translate the configuration.',
-    'route_name' => 'config_translation.mapper_list',
-    'weight' => 30,
-  );
-  return $items;
-}
-
-/**
  * Implements hook_permission().
  */
 function config_translation_permission() {
@@ -70,6 +56,33 @@ function config_translation_theme() {
 }
 
 /**
+ * Implements hook_entity_type_alter().
+ */
+function config_translation_entity_type_alter(array &$entity_types) {
+  /** @var $entity_types \Drupal\Core\Entity\EntityTypeInterface[] */
+  foreach ($entity_types as $entity_type_id => $entity_type) {
+    if ($entity_type->isSubclassOf('Drupal\Core\Config\Entity\ConfigEntityInterface')) {
+      if ($entity_type_id == 'block') {
+        $class = 'Drupal\config_translation\Controller\ConfigTranslationBlockListBuilder';
+      }
+      elseif ($entity_type_id == 'field_instance_config') {
+        $class = 'Drupal\config_translation\Controller\ConfigTranslationFieldInstanceListBuilder';
+        // Will be filled in dynamically, see \Drupal\field\Entity\FieldInstanceConfig::linkTemplates().
+        $entity_type->setLinkTemplate('drupal:config-translation-overview', 'config_translation.item.overview.');
+      }
+      else {
+        $class = 'Drupal\config_translation\Controller\ConfigTranslationEntityListBuilder';
+      }
+      $entity_type->setControllerClass('config_translation_list', $class);
+
+      if ($entity_type->hasLinkTemplate('edit-form')) {
+        $entity_type->setLinkTemplate('drupal:config-translation-overview', 'config_translation.item.overview.' . $entity_type->getLinkTemplate('edit-form'));
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_config_translation_info().
  */
 function config_translation_config_translation_info(&$info) {
@@ -80,24 +93,23 @@ function config_translation_config_translation_info(&$info) {
   // "field_ui.instance_edit_$entity_type" are not defined.
   if (\Drupal::moduleHandler()->moduleExists('field_ui')) {
     // Add fields entity mappers to all fieldable entity types defined.
-    foreach ($entity_manager->getDefinitions() as $entity_type => $entity_info) {
+    foreach ($entity_manager->getDefinitions() as $entity_type_id => $entity_type) {
       $base_route = NULL;
       try {
-        $base_route = $route_provider->getRouteByName('field_ui.instance_edit_' . $entity_type);
+        $base_route = $route_provider->getRouteByName('field_ui.instance_edit_' . $entity_type_id);
       }
       catch (RouteNotFoundException $e) {
         // Ignore non-existent routes.
       }
 
       // Make sure entity type is fieldable and has a base route.
-      if ($entity_info['fieldable'] && !empty($base_route)) {
-        $info[$entity_type . '_fields'] = array(
-          'base_route_name' => 'field_ui.instance_edit_' . $entity_type,
-          'entity_type' => 'field_instance',
+      if ($entity_type->isFieldable() && !empty($base_route)) {
+        $info[$entity_type_id . '_fields'] = array(
+          'base_route_name' => 'field_ui.instance_edit_' . $entity_type_id,
+          'entity_type' => 'field_instance_config',
           'title' => '!label field',
           'class' => '\Drupal\config_translation\ConfigFieldInstanceMapper',
-          'base_entity_type' => $entity_type,
-          'list_controller' => '\Drupal\config_translation\Controller\ConfigTranslationFieldInstanceListController',
+          'base_entity_type' => $entity_type_id,
           'weight' => 10,
         );
       }
@@ -105,12 +117,12 @@ function config_translation_config_translation_info(&$info) {
   }
 
   // Discover configuration entities automatically.
-  foreach ($entity_manager->getDefinitions() as $entity_type => $entity_info) {
+  foreach ($entity_manager->getDefinitions() as $entity_type_id => $entity_type) {
     // Determine base path for entities automatically if provided via the
     // configuration entity.
     if (
-      !in_array('Drupal\Core\Config\Entity\ConfigEntityInterface', class_implements($entity_info['class'])) ||
-      !isset($entity_info['links']['edit-form'])
+      !$entity_type->isSubclassOf('Drupal\Core\Config\Entity\ConfigEntityInterface') ||
+      !$entity_type->hasLinkTemplate('edit-form')
     ) {
       // Do not record this entity mapper if the entity type does not
       // provide a base route. We'll surely not be able to do anything with
@@ -120,35 +132,30 @@ function config_translation_config_translation_info(&$info) {
     }
 
     // Use the entity type as the plugin ID.
-    $info[$entity_type] = array(
+    $info[$entity_type_id] = array(
       'class' => '\Drupal\config_translation\ConfigEntityMapper',
-      'base_route_name' => $entity_info['links']['edit-form'],
+      'base_route_name' => $entity_type->getLinkTemplate('edit-form'),
       'title' => '!label !entity_type',
       'names' => array(),
-      'entity_type' => $entity_type,
+      'entity_type' => $entity_type_id,
       'weight' => 10,
     );
-
-    if ($entity_type == 'block') {
-      // Blocks placements need a specific list controller.
-      $info['block']['list_controller'] = '\Drupal\config_translation\Controller\ConfigTranslationBlockListController';
-    }
   }
 }
 
 /**
- * Implements hook_entity_operation_alter().
+ * Implements hook_entity_operation().
  */
-function config_translation_entity_operation_alter(array &$operations, EntityInterface $entity) {
+function config_translation_entity_operation(EntityInterface $entity) {
+  $operations = array();
   if (\Drupal::currentUser()->hasPermission('translate configuration')) {
-    $uri = $entity->uri();
     $operations['translate'] = array(
       'title' => t('Translate'),
-      'href' => $uri['path'] . '/translate',
-      'options' => $uri['options'],
       'weight' => 50,
-    );
+    ) + $entity->urlInfo('drupal:config-translation-overview')->toArray();
   }
+
+  return $operations;
 }
 
 /**
@@ -162,25 +169,3 @@ function config_translation_config_translation_type_info_alter(&$definitions) {
   $definitions['date_format']['form_element_class'] = '\Drupal\config_translation\FormElement\DateFormat';
 }
 
-/**
- * Implements hook_library_info().
- */
-function config_translation_library_info() {
-  $libraries['drupal.config_translation.admin'] = array(
-    'title' => 'Configuration translation admin',
-    'version' => \Drupal::VERSION,
-    'css' => array(
-      drupal_get_path('module', 'config_translation') . '/css/config_translation.admin.css' => array(),
-    ),
-  );
-  return $libraries;
-}
-
-/**
- * Implements hook_local_tasks_alter().
- */
-function config_translation_local_tasks_alter(&$local_tasks) {
-  // Alters in tab_root_ids onto the config translation local tasks.
-  $derivative = ConfigTranslationLocalTasks::create(\Drupal::getContainer(), 'config_translation.local_tasks');
-  $derivative->alterLocalTasks($local_tasks);
-}

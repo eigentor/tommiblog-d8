@@ -7,24 +7,20 @@
 
 namespace Drupal\user\Plugin\Search;
 
-use Drupal\Core\Annotation\Translation;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Access\AccessibleInterface;
-use Drupal\search\Annotation\SearchPlugin;
 use Drupal\search\Plugin\SearchPluginBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Executes a keyword search for users against the {users} database table.
  *
  * @SearchPlugin(
  *   id = "user_search",
- *   title = @Translation("Users"),
- *   path = "user"
+ *   title = @Translation("Users")
  * )
  */
 class UserSearch extends SearchPluginBase implements AccessibleInterface {
@@ -60,7 +56,7 @@ class UserSearch extends SearchPluginBase implements AccessibleInterface {
   /**
    * {@inheritdoc}
    */
-  static public function create(ContainerInterface $container, array $configuration, $plugin_id, array $plugin_definition) {
+  static public function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
       $container->get('database'),
       $container->get('entity.manager'),
@@ -87,10 +83,10 @@ class UserSearch extends SearchPluginBase implements AccessibleInterface {
    *   A configuration array containing information about the plugin instance.
    * @param string $plugin_id
    *   The plugin_id for the plugin instance.
-   * @param array $plugin_definition
+   * @param mixed $plugin_definition
    *   The plugin implementation definition.
    */
-  public function __construct(Connection $database, EntityManagerInterface $entity_manager, ModuleHandlerInterface $module_handler, AccountInterface $current_user, array $configuration, $plugin_id, array $plugin_definition) {
+  public function __construct(Connection $database, EntityManagerInterface $entity_manager, ModuleHandlerInterface $module_handler, AccountInterface $current_user, array $configuration, $plugin_id, $plugin_definition) {
     $this->database = $database;
     $this->entityManager = $entity_manager;
     $this->moduleHandler = $module_handler;
@@ -139,7 +135,7 @@ class UserSearch extends SearchPluginBase implements AccessibleInterface {
       ->limit(15)
       ->execute()
       ->fetchCol();
-    $accounts = $this->entityManager->getStorageController('user')->loadMultiple($uids);
+    $accounts = $this->entityManager->getStorage('user')->loadMultiple($uids);
 
     foreach ($accounts as $account) {
       $result = array(

@@ -2,27 +2,26 @@
 
 /**
  * @file
- * Contains \Drupal\comment\Form\DeleteConfirmMultiple.
+ * Contains \Drupal\comment\Form\ConfirmDeleteMultiple.
  */
 
 namespace Drupal\comment\Form;
 
-use Drupal\comment\CommentStorageControllerInterface;
+use Drupal\comment\CommentStorageInterface;
 use Drupal\Component\Utility\String;
 use Drupal\Core\Cache\Cache;
-use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides the comment multiple delete confirmation form.
  */
-class ConfirmDeleteMultiple extends ConfirmFormBase implements ContainerInjectionInterface {
+class ConfirmDeleteMultiple extends ConfirmFormBase {
 
   /**
    * The comment storage.
    *
-   * @var \Drupal\comment\CommentStorageControllerInterface
+   * @var \Drupal\comment\CommentStorageInterface
    */
   protected $commentStorage;
 
@@ -36,10 +35,10 @@ class ConfirmDeleteMultiple extends ConfirmFormBase implements ContainerInjectio
   /**
    * Creates an new ConfirmDeleteMultiple form.
    *
-   * @param \Drupal\comment\CommentStorageControllerInterface $comment_storage
+   * @param \Drupal\comment\CommentStorageInterface $comment_storage
    *   The comment storage.
    */
-  public function __construct(CommentStorageControllerInterface $comment_storage) {
+  public function __construct(CommentStorageInterface $comment_storage) {
     $this->commentStorage = $comment_storage;
   }
 
@@ -48,7 +47,7 @@ class ConfirmDeleteMultiple extends ConfirmFormBase implements ContainerInjectio
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity.manager')->getStorageController('comment')
+      $container->get('entity.manager')->getStorage('comment')
     );
   }
 
@@ -70,6 +69,9 @@ class ConfirmDeleteMultiple extends ConfirmFormBase implements ContainerInjectio
    * {@inheritdoc}
    */
   public function getCancelRoute() {
+    return array(
+      'route_name' => 'comment.admin',
+    );
   }
 
   /**
@@ -110,11 +112,7 @@ class ConfirmDeleteMultiple extends ConfirmFormBase implements ContainerInjectio
       $form_state['redirect_route']['route_name'] = 'comment.admin';
     }
 
-    $form = parent::buildForm($form, $form_state);
-
-    // @todo Convert to getCancelRoute() after http://drupal.org/node/1986606.
-    $form['actions']['cancel']['#href'] = 'admin/content/comment';
-    return $form;
+    return parent::buildForm($form, $form_state);
   }
 
   /**

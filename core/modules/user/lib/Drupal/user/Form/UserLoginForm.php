@@ -9,7 +9,8 @@ namespace Drupal\user\Form;
 
 use Drupal\Core\Flood\FloodInterface;
 use Drupal\Core\Form\FormBase;
-use Drupal\user\UserStorageControllerInterface;
+use Drupal\user\UserAuthInterface;
+use Drupal\user\UserStorageInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -25,23 +26,33 @@ class UserLoginForm extends FormBase {
   protected $flood;
 
   /**
-   * The user storage controller.
+   * The user storage.
    *
-   * @var \Drupal\user\UserStorageControllerInterface
+   * @var \Drupal\user\UserStorageInterface
    */
   protected $userStorage;
+
+  /**
+   * The user authentication object.
+   *
+   * @var \Drupal\user\UserAuthInterface
+   */
+  protected $userAuth;
 
   /**
    * Constructs a new UserLoginForm.
    *
    * @param \Drupal\Core\Flood\FloodInterface $flood
    *   The flood service.
-   * @param \Drupal\user\UserStorageControllerInterface $user_storage
-   *   The user storage controller.
+   * @param \Drupal\user\UserStorageInterface $user_storage
+   *   The user storage.
+   * @param \Drupal\user\UserAuthInterface $user_auth
+   *   The user authentication object.
    */
-  public function __construct(FloodInterface $flood, UserStorageControllerInterface $user_storage) {
+  public function __construct(FloodInterface $flood, UserStorageInterface $user_storage, UserAuthInterface $user_auth) {
     $this->flood = $flood;
     $this->userStorage = $user_storage;
+    $this->userAuth = $user_auth;
   }
 
   /**
@@ -50,7 +61,8 @@ class UserLoginForm extends FormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('flood'),
-      $container->get('entity.manager')->getStorageController('user')
+      $container->get('entity.manager')->getStorage('user'),
+      $container->get('user.auth')
     );
   }
 
@@ -118,7 +130,7 @@ class UserLoginForm extends FormBase {
   public function validateName(array &$form, array &$form_state) {
     if (!empty($form_state['values']['name']) && user_is_blocked($form_state['values']['name'])) {
       // Blocked in user administration.
-      form_set_error('name', $form_state, $this->t('The username %name has not been activated or is blocked.', array('%name' => $form_state['values']['name'])));
+      $this->setFormError('name', $form_state, $this->t('The username %name has not been activated or is blocked.', array('%name' => $form_state['values']['name'])));
     }
   }
 
@@ -165,7 +177,7 @@ class UserLoginForm extends FormBase {
       }
       // We are not limited by flood control, so try to authenticate.
       // Set $form_state['uid'] as a flag for self::validateFinal().
-      $form_state['uid'] = user_authenticate($form_state['values']['name'], $password);
+      $form_state['uid'] = $this->userAuth->authenticate($form_state['values']['name'], $password);
     }
   }
 
@@ -186,15 +198,15 @@ class UserLoginForm extends FormBase {
 
       if (isset($form_state['flood_control_triggered'])) {
         if ($form_state['flood_control_triggered'] == 'user') {
-          form_set_error('name', $form_state, format_plural($flood_config->get('user_limit'), 'Sorry, there has been more than one failed login attempt for this account. It is temporarily blocked. Try again later or <a href="@url">request a new password</a>.', 'Sorry, there have been more than @count failed login attempts for this account. It is temporarily blocked. Try again later or <a href="@url">request a new password</a>.', array('@url' => url('user/password'))));
+          $this->setFormError('name', $form_state, format_plural($flood_config->get('user_limit'), 'Sorry, there has been more than one failed login attempt for this account. It is temporarily blocked. Try again later or <a href="@url">request a new password</a>.', 'Sorry, there have been more than @count failed login attempts for this account. It is temporarily blocked. Try again later or <a href="@url">request a new password</a>.', array('@url' => url('user/password'))));
         }
         else {
           // We did not find a uid, so the limit is IP-based.
-          form_set_error('name', $form_state, $this->t('Sorry, too many failed login attempts from your IP address. This IP address is temporarily blocked. Try again later or <a href="@url">request a new password</a>.', array('@url' => url('user/password'))));
+          $this->setFormError('name', $form_state, $this->t('Sorry, too many failed login attempts from your IP address. This IP address is temporarily blocked. Try again later or <a href="@url">request a new password</a>.', array('@url' => url('user/password'))));
         }
       }
       else {
-        form_set_error('name', $form_state, $this->t('Sorry, unrecognized username or password. <a href="@password">Have you forgotten your password?</a>', array('@password' => url('user/password', array('query' => array('name' => $form_state['values']['name']))))));
+        $this->setFormError('name', $form_state, $this->t('Sorry, unrecognized username or password. <a href="@password">Have you forgotten your password?</a>', array('@password' => url('user/password', array('query' => array('name' => $form_state['values']['name']))))));
         $accounts = $this->userStorage->loadByProperties(array('name' => $form_state['values']['name']));
         if (!empty($accounts)) {
           watchdog('user', 'Login attempt failed for %user.', array('%user' => $form_state['values']['name']));

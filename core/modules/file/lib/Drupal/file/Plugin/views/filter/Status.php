@@ -7,7 +7,6 @@
 
 namespace Drupal\file\Plugin\views\filter;
 
-use Drupal\Component\Annotation\PluginID;
 use Drupal\views\Plugin\views\filter\InOperator;
 
 /**
@@ -15,7 +14,7 @@ use Drupal\views\Plugin\views\filter\InOperator;
  *
  * @ingroup views_filter_handlers
  *
- * @PluginID("file_status")
+ * @ViewsFilter("file_status")
  */
 class Status extends InOperator {
 

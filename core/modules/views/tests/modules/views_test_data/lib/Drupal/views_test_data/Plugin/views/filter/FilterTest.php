@@ -7,11 +7,10 @@
 
 namespace Drupal\views_test_data\Plugin\views\filter;
 
-use Drupal\Component\Annotation\PluginID;
 use Drupal\views\Plugin\views\filter\FilterPluginBase;
 
 /**
- * @PluginID("test_filter")
+ * @ViewsFilter("test_filter")
  */
 class FilterTest extends FilterPluginBase {
 

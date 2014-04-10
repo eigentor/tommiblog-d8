@@ -67,7 +67,6 @@ class AggregatorPluginSettingsBaseTest extends UnitTestCase {
 
     $this->settingsForm = new SettingsForm(
       $this->configFactory,
-      $this->getMock('Drupal\Core\Config\Context\ContextInterface'),
       $this->managers['fetcher'],
       $this->managers['parser'],
       $this->managers['processor'],
@@ -116,7 +115,7 @@ class AggregatorPluginSettingsBaseTest extends UnitTestCase {
 }
 
 namespace {
-  // @todo Remove after https://drupal.org/node/1858196 is in.
+  // @todo Delete after https://drupal.org/node/1858196 is in.
   if (!function_exists('drupal_set_message')) {
     function drupal_set_message() {}
   }

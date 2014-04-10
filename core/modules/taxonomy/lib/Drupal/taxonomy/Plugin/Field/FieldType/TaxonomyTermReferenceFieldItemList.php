@@ -7,12 +7,12 @@
 
 namespace Drupal\taxonomy\Plugin\Field\FieldType;
 
-use Drupal\Core\Field\Plugin\Field\FieldType\LegacyConfigFieldItemList;
+use Drupal\Core\Field\FieldItemList;
 
 /**
- * Represents a configurable taxonomy_term_reference entity field.
+ * Represents a configurable taxonomy_term_reference entity field item list.
  */
-class TaxonomyTermReferenceFieldItemList extends LegacyConfigFieldItemList {
+class TaxonomyTermReferenceFieldItemList extends FieldItemList {
 
   /**
    * {@inheritdoc}
@@ -31,7 +31,7 @@ class TaxonomyTermReferenceFieldItemList extends LegacyConfigFieldItemList {
           ->condition('uuid', $uuids, 'IN')
           ->execute();
         $entities = \Drupal::entityManager()
-          ->getStorageController('taxonomy_term')
+          ->getStorage('taxonomy_term')
           ->loadMultiple($entity_ids);
 
         foreach ($entities as $id => $entity) {
@@ -66,7 +66,7 @@ class TaxonomyTermReferenceFieldItemList extends LegacyConfigFieldItemList {
       $ids[] = $properties['target_id'];
     }
     $entities = \Drupal::entityManager()
-      ->getStorageController('taxonomy_term')
+      ->getStorage('taxonomy_term')
       ->loadMultiple($ids);
 
     foreach ($default_value as $delta => $properties) {

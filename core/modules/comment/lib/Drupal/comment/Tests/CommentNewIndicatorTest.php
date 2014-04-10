@@ -7,7 +7,9 @@
 
 namespace Drupal\comment\Tests;
 
+use Drupal\Component\Utility\Json;
 use Drupal\Core\Language\Language;
+use Drupal\comment\CommentInterface;
 
 /**
  * Tests the 'new' marker on comments.
@@ -87,6 +89,7 @@ class CommentNewIndicatorTest extends CommentTestBase {
 
     // Create a new comment. This helper function may be run with different
     // comment settings so use $comment->save() to avoid complex setup.
+    /** @var \Drupal\comment\CommentInterface $comment */
     $comment = entity_create('comment', array(
       'cid' => NULL,
       'entity_id' => $this->node->id(),
@@ -94,7 +97,7 @@ class CommentNewIndicatorTest extends CommentTestBase {
       'field_name' => 'comment',
       'pid' => 0,
       'uid' => $this->loggedInUser->id(),
-      'status' => COMMENT_PUBLISHED,
+      'status' => CommentInterface::PUBLISHED,
       'subject' => $this->randomName(),
       'hostname' => '127.0.0.1',
       'langcode' => Language::LANGCODE_NOT_SPECIFIED,
@@ -110,11 +113,11 @@ class CommentNewIndicatorTest extends CommentTestBase {
     // value, the drupal.node-new-comments-link library would determine that the
     // node received a comment after the user last viewed it, and hence it would
     // perform an HTTP request to render the "new comments" node link.
-    $this->assertIdentical(1, count($this->xpath('//*[@data-history-node-last-comment-timestamp="' . $comment->changed->value .  '"]')), 'data-history-node-last-comment-timestamp attribute is set to the correct value.');
+    $this->assertIdentical(1, count($this->xpath('//*[@data-history-node-last-comment-timestamp="' . $comment->getChangedTime() .  '"]')), 'data-history-node-last-comment-timestamp attribute is set to the correct value.');
     $this->assertIdentical(1, count($this->xpath('//*[@data-history-node-field-name="comment"]')), 'data-history-node-field-name attribute is set to the correct value.');
     $response = $this->renderNewCommentsNodeLinks(array($this->node->id()));
     $this->assertResponse(200);
-    $json = drupal_json_decode($response);
+    $json = Json::decode($response);
     $expected = array($this->node->id() => array(
       'new_comment_count' => 1,
       'first_new_comment_link' => url('node/' . $this->node->id(), array('fragment' => 'new')),

@@ -19,15 +19,14 @@ class EditTestBase extends DrupalUnitTestBase {
    *
    * @var array
    */
-  public static $modules = array('system', 'entity', 'entity_test', 'field', 'field_test', 'number', 'filter', 'user', 'text', 'edit');
+  public static $modules = array('system', 'entity', 'entity_test', 'field', 'field_test', 'filter', 'user', 'text', 'edit');
 
   /**
    * Sets the default field storage backend for fields created during tests.
    */
-  public function setUp() {
+  protected function setUp() {
     parent::setUp();
 
-    $this->installSchema('system', 'variable');
     $this->installSchema('entity_test', array('entity_test', 'entity_test_rev'));
     $this->installConfig(array('field', 'filter'));
   }
@@ -55,7 +54,7 @@ class EditTestBase extends DrupalUnitTestBase {
    */
   public function createFieldWithInstance($field_name, $type, $cardinality, $label, $instance_settings, $widget_type, $widget_settings, $formatter_type, $formatter_settings) {
     $field = $field_name . '_field';
-    $this->$field = entity_create('field_entity', array(
+    $this->$field = entity_create('field_config', array(
       'name' => $field_name,
       'entity_type' => 'entity_test',
       'type' => $type,
@@ -64,7 +63,7 @@ class EditTestBase extends DrupalUnitTestBase {
     $this->$field->save();
 
     $instance = $field_name . '_instance';
-    $this->$instance = entity_create('field_instance', array(
+    $this->$instance = entity_create('field_instance_config', array(
       'field_name' => $field_name,
       'entity_type' => 'entity_test',
       'bundle' => 'entity_test',

@@ -7,18 +7,18 @@
 
 namespace Drupal\node\Plugin\views\field;
 
+use Drupal\Core\Session\AccountInterface;
 use Drupal\node\Plugin\views\field\Link;
 use Drupal\views\Plugin\views\display\DisplayPluginBase;
 use Drupal\views\ResultRow;
 use Drupal\views\ViewExecutable;
-use Drupal\Component\Annotation\PluginID;
 
 /**
  * Field handler to present a link to a node revision.
  *
  * @ingroup views_field_handlers
  *
- * @PluginID("node_revision_link")
+ * @ViewsField("node_revision_link")
  */
 class RevisionLink extends Link {
 
@@ -31,8 +31,11 @@ class RevisionLink extends Link {
     $this->additional_fields['node_vid'] = array('table' => 'node_revision', 'field' => 'vid');
   }
 
-  public function access() {
-    return user_access('view revisions') || user_access('administer nodes');
+  /**
+   * {@inheritdoc}
+   */
+  public function access(AccountInterface $account) {
+    return $account->hasPermission('view revisions') || $account->hasPermission('administer nodes');
   }
 
   /**

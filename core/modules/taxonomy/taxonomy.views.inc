@@ -5,8 +5,8 @@
  * Provide views data for taxonomy.module.
  */
 
-use Drupal\Core\Entity\FieldableDatabaseStorageController;
-use Drupal\field\FieldInterface;
+use Drupal\Core\Entity\ContentEntityDatabaseStorage;
+use Drupal\field\FieldConfigInterface;
 
 /**
  * Implements hook_views_data().
@@ -338,6 +338,7 @@ function taxonomy_views_data() {
       'base' => 'taxonomy_term_data',
       'field' => 'parent',
       'label' => t('Parent'),
+      'id' => 'standard',
     ),
     'filter' => array(
       'help' => t('Filter the results of "Taxonomy: Term" by the parent pid.'),
@@ -404,19 +405,19 @@ function taxonomy_views_data_alter(&$data) {
  *
  * @see field_views_field_default_views_data()
  */
-function taxonomy_field_views_data(FieldInterface $field) {
+function taxonomy_field_views_data(FieldConfigInterface $field) {
   $data = field_views_field_default_views_data($field);
   foreach ($data as $table_name => $table_data) {
     foreach ($table_data as $field_name => $field_data) {
       if (isset($field_data['filter']) && $field_name != 'delta') {
         $data[$table_name][$field_name]['filter']['id'] = 'taxonomy_index_tid';
-        $allowed_values = $field->getFieldSetting('allowed_values');
+        $allowed_values = $field->getSetting('allowed_values');
         $data[$table_name][$field_name]['filter']['vocabulary'] = $allowed_values[0]['vocabulary'];
       }
     }
 
     // Add the relationship only on the tid field.
-    $field_name = $field->getFieldName();
+    $field_name = $field->getName();
     $data[$table_name][$field_name . '_target_id']['relationship'] = array(
       'id' => 'standard',
       'base' => 'taxonomy_term_data',
@@ -434,24 +435,24 @@ function taxonomy_field_views_data(FieldInterface $field) {
  *
  * Views integration to provide reverse relationships on term references.
  */
-function taxonomy_field_views_data_views_data_alter(array &$data, FieldInterface $field) {
-  $field_name = $field->getFieldName();
-  $entity_type = $field->entity_type;
-  $entity_info = entity_get_info($entity_type);
-  $pseudo_field_name = 'reverse_' . $field_name . '_' . $entity_type;
+function taxonomy_field_views_data_views_data_alter(array &$data, FieldConfigInterface $field) {
+  $field_name = $field->getName();
+  $entity_type_id = $field->entity_type;
+  $entity_type = \Drupal::entityManager()->getDefinition($entity_type_id);
+  $pseudo_field_name = 'reverse_' . $field_name . '_' . $entity_type_id;
 
-  list($label) = field_views_field_label($entity_type, $field_name);
+  list($label) = field_views_field_label($entity_type_id, $field_name);
 
   $data['taxonomy_term_data'][$pseudo_field_name]['relationship'] = array(
-    'title' => t('@entity using @field', array('@entity' => $entity_info['label'], '@field' => $label)),
-    'help' => t('Relate each @entity with a @field set to the term.', array('@entity' => $entity_info['label'], '@field' => $label)),
+    'title' => t('@entity using @field', array('@entity' => $entity_type->getLabel(), '@field' => $label)),
+    'help' => t('Relate each @entity with a @field set to the term.', array('@entity' => $entity_type->getLabel(), '@field' => $label)),
     'id' => 'entity_reverse',
     'field_name' => $field_name,
-    'entity_type' => $entity_type,
-    'field table' => FieldableDatabaseStorageController::_fieldTableName($field),
+    'entity_type' => $entity_type_id,
+    'field table' => ContentEntityDatabaseStorage::_fieldTableName($field),
     'field field' => $field_name . '_target_id',
-    'base' => $entity_info['base_table'],
-    'base field' => $entity_info['entity_keys']['id'],
+    'base' => $entity_type->getBaseTable(),
+    'base field' => $entity_type->getKey('id'),
     'label' => t('!field_name', array('!field_name' => $field_name)),
     'join_extra' => array(
       0 => array(
@@ -461,33 +462,6 @@ function taxonomy_field_views_data_views_data_alter(array &$data, FieldInterface
       ),
     ),
   );
-}
-
-/**
- * Helper function to set a breadcrumb for taxonomy.
- */
-function views_taxonomy_set_breadcrumb(&$breadcrumb, &$argument) {
-  if (empty($argument->options['set_breadcrumb'])) {
-    return;
-  }
-
-  $args = $argument->view->args;
-  $parents = taxonomy_get_parents_all($argument->argument);
-  foreach (array_reverse($parents) as $parent) {
-    // Unfortunately parents includes the current argument. Skip.
-    if ($parent->id() == $argument->argument) {
-      continue;
-    }
-    if (!empty($argument->options['use_taxonomy_term_path'])) {
-      $path = $parent->uri();
-      $path = $path['path'];
-    }
-    else {
-      $args[$argument->position] = $parent->id();
-      $path = $argument->view->getUrl($args);
-    }
-    $breadcrumb[$path] = check_plain($parent->label());
-  }
 }
 
 /**

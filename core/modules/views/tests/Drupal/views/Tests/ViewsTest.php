@@ -30,23 +30,24 @@ class ViewsTest extends UnitTestCase {
     parent::setUp();
 
     $container = new ContainerBuilder();
-    $container->set('views.executable', new ViewExecutableFactory());
+    $user = $this->getMock('Drupal\Core\Session\AccountInterface');
+    $container->set('views.executable', new ViewExecutableFactory($user));
 
     $this->view = new View(array('id' => 'test_view'), 'view');
 
-    $view_storage_controller = $this->getMockBuilder('Drupal\views\ViewStorageController')
+    $view_storage = $this->getMockBuilder('Drupal\Core\Config\Entity\ConfigEntityStorage')
       ->disableOriginalConstructor()
       ->getMock();
-    $view_storage_controller->expects($this->once())
+    $view_storage->expects($this->once())
       ->method('load')
       ->with('test_view')
       ->will($this->returnValue($this->view));
 
     $entity_manager = $this->getMock('Drupal\Core\Entity\EntityManagerInterface');
     $entity_manager->expects($this->once())
-      ->method('getStorageController')
+      ->method('getStorage')
       ->with('view')
-      ->will($this->returnValue($view_storage_controller));
+      ->will($this->returnValue($view_storage));
     $container->set('entity.manager', $entity_manager);
 
     \Drupal::setContainer($container);

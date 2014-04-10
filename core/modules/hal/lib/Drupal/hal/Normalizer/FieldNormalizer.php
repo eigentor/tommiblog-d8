@@ -8,9 +8,7 @@
 namespace Drupal\hal\Normalizer;
 
 use Drupal\Component\Utility\NestedArray;
-use Drupal\Core\Language\Language;
-
-use Symfony\Component\Serializer\Exception\LogicException;
+use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 
 /**
  * Converts the Drupal field structure to HAL array structure.
@@ -37,7 +35,7 @@ class FieldNormalizer extends NormalizerBase {
 
     // If this field is not translatable, it can simply be normalized without
     // separating it into different translations.
-    if (!$field_definition->isFieldTranslatable()) {
+    if (!$field_definition->isTranslatable()) {
       $normalized_field_items = $this->normalizeFieldItems($field, $format, $context);
     }
     // Otherwise, the languages have to be extracted from the entity and passed
@@ -64,10 +62,10 @@ class FieldNormalizer extends NormalizerBase {
    */
   public function denormalize($data, $class, $format = NULL, array $context = array()) {
     if (!isset($context['target_instance'])) {
-      throw new LogicException('$context[\'target_instance\'] must be set to denormalize with the FieldNormalizer');
+      throw new InvalidArgumentException('$context[\'target_instance\'] must be set to denormalize with the FieldNormalizer');
     }
     if ($context['target_instance']->getParent() == NULL) {
-      throw new LogicException('The field passed in via $context[\'target_instance\'] must have a parent set.');
+      throw new InvalidArgumentException('The field passed in via $context[\'target_instance\'] must have a parent set.');
     }
 
     $field = $context['target_instance'];
@@ -75,7 +73,7 @@ class FieldNormalizer extends NormalizerBase {
       $count = $field->count();
       // Get the next field item instance. The offset will serve as the field
       // item name.
-      $field_item = $field->offsetGet($count);
+      $field_item = $field->get($count);
       $field_item_class = get_class($field_item);
       // Pass in the empty field item object as the target instance.
       $context['target_instance'] = $field_item;

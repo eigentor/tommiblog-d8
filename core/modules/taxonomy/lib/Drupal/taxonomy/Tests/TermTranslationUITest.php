@@ -43,7 +43,7 @@ class TermTranslationUITest extends ContentTranslationUITest {
   }
 
   function setUp() {
-    $this->entityType = 'taxonomy_term';
+    $this->entityTypeId = 'taxonomy_term';
     $this->bundle = 'tags';
     $this->name = $this->randomName();
     parent::setUp();
@@ -82,6 +82,25 @@ class TermTranslationUITest extends ContentTranslationUITest {
   }
 
   /**
+   * Returns an edit array containing the values to be posted.
+   */
+  protected function getEditValues($values, $langcode, $new = FALSE) {
+    $edit = parent::getEditValues($values, $langcode, $new);
+
+    // To be able to post values for the configurable base fields (name,
+    // description) have to be suffixed with [0][value].
+    foreach ($edit as $property => $value) {
+      foreach (array('name', 'description') as $key) {
+        if ($property == $key) {
+          $edit[$key . '[0][value]'] = $value;
+          unset($edit[$property]);
+        }
+      }
+    }
+    return $edit;
+  }
+
+  /**
    * Overrides \Drupal\content_translation\Tests\ContentTranslationUITest::testTranslationUI().
    */
   public function testTranslationUI() {
@@ -117,12 +136,12 @@ class TermTranslationUITest extends ContentTranslationUITest {
     $untranslatable_tid = $this->createEntity(array(), $this->langcodes[0], $untranslatable_vocabulary->id());
 
     // Verify translation links.
-    $this->drupalGet('admin/structure/taxonomy/manage/' .  $this->vocabulary->id());
+    $this->drupalGet('admin/structure/taxonomy/manage/' .  $this->vocabulary->id() . '/overview');
     $this->assertResponse(200, 'The translatable vocabulary page was found.');
     $this->assertLinkByHref('term/' . $translatable_tid . '/translations', 0, 'The translations link exists for a translatable vocabulary.');
     $this->assertLinkByHref('term/' . $translatable_tid . '/edit', 0, 'The edit link exists for a translatable vocabulary.');
 
-    $this->drupalGet('admin/structure/taxonomy/manage/' . $untranslatable_vocabulary->id());
+    $this->drupalGet('admin/structure/taxonomy/manage/' . $untranslatable_vocabulary->id() . '/overview');
     $this->assertResponse(200);
     $this->assertLinkByHref('term/' . $untranslatable_tid . '/edit');
     $this->assertNoLinkByHref('term/' . $untranslatable_tid . '/translations');

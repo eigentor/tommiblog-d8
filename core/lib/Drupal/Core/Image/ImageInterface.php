@@ -21,12 +21,12 @@ interface ImageInterface {
   public function isSupported();
 
   /**
-   * Returns the extension of the image file.
+   * Checks if the image is existing.
    *
-   * @return string
-   *   The extension of the file, or an empty string if the file is invalid.
+   * @return bool
+   *   TRUE if the image exists and is a valid image, FALSE otherwise.
    */
-  public function getExtension();
+  public function isExisting();
 
   /**
    * Returns the height of the image file.
@@ -85,36 +85,10 @@ interface ImageInterface {
    * Returns the MIME type of the image file.
    *
    * @return string
-   *   The MIME type of the file, or an empty string if the file is invalid.
+   *   The MIME type of the image file, or an empty string if the image is
+   *   invalid.
    */
   public function getMimeType();
-
-  /**
-   * Sets the image file resource.
-   *
-   * @param resource $resource
-   *   The image file handle.
-   *
-   * @return self
-   *   Returns this image file.
-   */
-  public function setResource($resource);
-
-  /**
-   * Determines if this image file has a resource set.
-   *
-   * @return bool
-   *   TRUE if this image file has a resource set, FALSE otherwise.
-   */
-  public function hasResource();
-
-  /**
-   * Retrieves the image file resource.
-   *
-   * @return resource
-   *   The image file handle.
-   */
-  public function getResource();
 
   /**
    * Sets the source path of the image file.
@@ -134,6 +108,14 @@ interface ImageInterface {
    *   The source path of the image file.
    */
   public function getSource();
+
+  /**
+   * Returns the image toolkit used for this image file.
+   *
+   * @return \Drupal\Core\ImageToolkit\ImageToolkitInterface
+   *   The image toolkit.
+   */
+  public function getToolkit();
 
   /**
    * Returns the ID of the image toolkit used for this image file.

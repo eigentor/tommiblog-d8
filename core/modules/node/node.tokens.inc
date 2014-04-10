@@ -90,7 +90,7 @@ function node_tokens($type, $tokens, array $data = array(), array $options = arr
 
   $url_options = array('absolute' => TRUE);
   if (isset($options['langcode'])) {
-    $url_options['language'] = language_load($options['langcode']);
+    $url_options['language'] = \Drupal::languageManager()->getLanguage($options['langcode']);
     $langcode = $options['langcode'];
   }
   else {
@@ -101,6 +101,7 @@ function node_tokens($type, $tokens, array $data = array(), array $options = arr
   $replacements = array();
 
   if ($type == 'node' && !empty($data['node'])) {
+    /** @var \Drupal\node\NodeInterface $node */
     $node = $data['node'];
 
     foreach ($tokens as $name => $original) {
@@ -156,7 +157,7 @@ function node_tokens($type, $tokens, array $data = array(), array $options = arr
                   $length = $settings['trim_length'];
                 }
 
-                $output = text_summary($output, $instance->getFieldSetting('text_processing') ? $item->format : NULL, $length);
+                $output = text_summary($output, $instance->getSetting('text_processing') ? $item->format : NULL, $length);
               }
             }
             $replacements[$original] = $output;
@@ -177,7 +178,7 @@ function node_tokens($type, $tokens, array $data = array(), array $options = arr
 
         // Default values for the chained tokens handled below.
         case 'author':
-          $account = $node->getAuthor() ? $node->getAuthor() : user_load(0);
+          $account = $node->getOwner() ? $node->getOwner() : user_load(0);
           $replacements[$original] = $sanitize ? check_plain($account->label()) : $account->label();
           break;
 
@@ -192,7 +193,7 @@ function node_tokens($type, $tokens, array $data = array(), array $options = arr
     }
 
     if ($author_tokens = $token_service->findWithPrefix($tokens, 'author')) {
-      $replacements += $token_service->generate('user', $author_tokens, array('user' => $node->getAuthor()), $options);
+      $replacements += $token_service->generate('user', $author_tokens, array('user' => $node->getOwner()), $options);
     }
 
     if ($created_tokens = $token_service->findWithPrefix($tokens, 'created')) {

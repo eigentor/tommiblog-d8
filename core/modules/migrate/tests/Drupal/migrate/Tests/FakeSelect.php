@@ -7,6 +7,7 @@
 
 namespace Drupal\migrate\Tests;
 
+use Drupal\Component\Utility\String;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Database\Query\Condition;
 use Drupal\Core\Database\Query\PlaceholderInterface;
@@ -19,7 +20,7 @@ class FakeSelect extends Select {
    * Contents of the pseudo-database.
    *
    * Keys are table names and values are arrays of rows in the table.
-   * Every row there contains all table fields keyed by field name.
+   * Every row there contains all table field values keyed by field name.
    *
    * @code
    * array(
@@ -51,21 +52,20 @@ class FakeSelect extends Select {
   /**
    * Constructs a new FakeSelect.
    *
+   * @param array $database_contents
+   *   An array of mocked database content.
    * @param string $table
    *   The base table name used within fake select.
    * @param string $alias
    *   The base table alias used within fake select.
-   * @param array $database_contents
-   *   An array of mocked database content.
-   *
    * @param string $conjunction
    *   The operator to use to combine conditions: 'AND' or 'OR'.
    */
-  public function __construct($table, $alias, array $database_contents, $conjunction = 'AND') {
+  public function __construct(array $database_contents, $table, $alias, $conjunction = 'AND') {
+    $this->databaseContents = $database_contents;
     $this->addJoin(NULL, $table, $alias);
     $this->where = new Condition($conjunction);
     $this->having = new Condition($conjunction);
-    $this->databaseContents = $database_contents;
   }
 
   /**
@@ -88,7 +88,17 @@ class FakeSelect extends Select {
       if ($type != 'INNER' && $type != 'LEFT') {
         throw new \Exception(sprintf('%s type not supported, only INNER and LEFT.', $type));
       }
-      if (!preg_match('/(\w+)\.(\w+)\s*=\s*(\w+)\.(\w+)/', $condition, $matches)) {
+      if (!preg_match('/^(\w+\.)?(\w+)\s*=\s*(\w+)\.(\w+)$/', $condition, $matches)) {
+        throw new \Exception('Only x.field1 = y.field2 conditions are supported.' . $condition);
+      }
+      if (!$matches[1] && count($this->tables) == 2) {
+        $aliases = array_keys($this->tables);
+        $matches[1] = $aliases[0];
+      }
+      else {
+        $matches[1] = substr($matches[1], 0, -1);
+      }
+      if (!$matches[1]) {
         throw new \Exception('Only x.field1 = y.field2 conditions are supported.' . $condition);
       }
       if ($matches[1] == $alias) {
@@ -291,6 +301,9 @@ class FakeSelect extends Select {
    *   The condition group to check.
    * @param array $rows
    *   An array of rows excluding non-matching rows.
+   *
+   * @return \Drupal\migrate\Tests\ConditionResolver
+   *   The condition resolver object.
    */
   protected function resolveConditions(Condition $condition_group, array &$rows) {
     $fields_with_table = $this->fieldsWithTable;
@@ -519,7 +532,7 @@ class FakeSelect extends Select {
         $fields = array_keys(reset($this->databaseContents[$table]));
       }
       else {
-        throw new \Exception('All fields on empty table is not supported.');
+        throw new \Exception(String::format('All fields on empty table @table is not supported.', array('@table' => $table)));
       }
     }
     return parent::fields($table_alias, $fields);

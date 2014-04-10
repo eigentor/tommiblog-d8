@@ -12,7 +12,6 @@ use Drupal\views\Plugin\views\field\FieldPluginBase;
 use Drupal\views\ResultRow;
 use Drupal\views\ViewExecutable;
 use Drupal\user\UserDataInterface;
-use Drupal\Component\Annotation\PluginID;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -22,7 +21,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @see \Drupal\user\UserDataInterface
  *
- * @PluginID("user_data")
+ * @ViewsField("user_data")
  */
 class UserData extends FieldPluginBase {
 
@@ -36,14 +35,14 @@ class UserData extends FieldPluginBase {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, array $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static($configuration, $plugin_id, $plugin_definition, $container->get('user.data'));
   }
 
   /**
    * Constructs a UserData object.
    */
-  public function __construct(array $configuration, $plugin_id, array $plugin_definition, UserDataInterface $user_data) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, UserDataInterface $user_data) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
     $this->userData = $user_data;
@@ -67,12 +66,18 @@ class UserData extends FieldPluginBase {
   public function buildOptionsForm(&$form, &$form_state) {
     parent::buildOptionsForm($form, $form_state);
 
+    $modules = system_get_info('module');
+    $names = array();
+    foreach ($modules as $name => $module) {
+      $names[$name] = $module['name'];
+    }
+
     $form['data_module'] = array(
       '#title' => t('Module name'),
       '#type' => 'select',
       '#description' => t('The module which sets this user data.'),
       '#default_value' => $this->options['data_module'],
-      '#options' => system_get_module_info('name'),
+      '#options' => $names,
     );
 
     $form['data_name'] = array(

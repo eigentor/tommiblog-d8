@@ -10,7 +10,6 @@ namespace Drupal\Core\Entity;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\BaseFormIdInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
-use Drupal\entity\EntityFormDisplayInterface;
 
 /**
  * Defines a common interface for entity form controller classes.
@@ -45,8 +44,7 @@ interface EntityFormControllerInterface extends BaseFormIdInterface {
    * @param string $operation
    *   The name of the current operation.
    *
-   * @return self
-   *   The entity form.
+   * @return $this
    */
   public function setOperation($operation);
 
@@ -57,30 +55,6 @@ interface EntityFormControllerInterface extends BaseFormIdInterface {
    *   The name of the operation.
    */
   public function getOperation();
-
-  /**
-   * Returns the form display.
-   *
-   * @param array $form_state
-   *   An associative array containing the current state of the form.
-   *
-   * @return \Drupal\entity\EntityFormDisplayInterface
-   *   The current form display.
-   */
-  public function getFormDisplay(array $form_state);
-
-  /**
-   * Sets the form display.
-   *
-   * Sets the form display which will be used for populating form element
-   * defaults.
-   *
-   * @param \Drupal\entity\EntityFormDisplayInterface $form_display
-   *   The form display that the current form operates with.
-   * @param array $form_state
-   *   An associative array containing the current state of the form.
-   */
-  public function setFormDisplay(EntityFormDisplayInterface $form_display, array &$form_state);
 
   /**
    * Returns the form entity.
@@ -106,6 +80,8 @@ interface EntityFormControllerInterface extends BaseFormIdInterface {
    *
    * @param \Drupal\Core\Entity\EntityInterface $entity
    *   The entity the current form should operate upon.
+   *
+   * @return $this
    */
   public function setEntity(EntityInterface $entity);
 
@@ -158,8 +134,7 @@ interface EntityFormControllerInterface extends BaseFormIdInterface {
    * @param \Drupal\Core\StringTranslation\TranslationInterface $translation_manager
    *   The translation manager.
    *
-   * @return self
-   *   The entity form.
+   * @return $this
    */
   public function setTranslationManager(TranslationInterface $translation_manager);
 
@@ -169,8 +144,7 @@ interface EntityFormControllerInterface extends BaseFormIdInterface {
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler.
    *
-   * @return self
-   *   The entity form.
+   * @return $this
    */
   public function setModuleHandler(ModuleHandlerInterface $module_handler);
 

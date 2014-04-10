@@ -8,23 +8,21 @@
 namespace Drupal\custom_block\Entity;
 
 use Drupal\Core\Entity\ContentEntityBase;
-use Drupal\Core\Entity\EntityStorageControllerInterface;
-use Drupal\Core\Entity\Annotation\EntityType;
-use Drupal\Core\Annotation\Translation;
+use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\FieldDefinition;
 use Drupal\custom_block\CustomBlockInterface;
 
 /**
  * Defines the custom block entity class.
  *
- * @EntityType(
+ * @ContentEntityType(
  *   id = "custom_block",
  *   label = @Translation("Custom Block"),
  *   bundle_label = @Translation("Custom Block type"),
  *   controllers = {
- *     "storage" = "Drupal\custom_block\CustomBlockStorageController",
  *     "access" = "Drupal\custom_block\CustomBlockAccessController",
- *     "list" = "Drupal\custom_block\CustomBlockListController",
+ *     "list_builder" = "Drupal\custom_block\CustomBlockListBuilder",
  *     "view_builder" = "Drupal\custom_block\CustomBlockViewBuilder",
  *     "form" = {
  *       "add" = "Drupal\custom_block\CustomBlockFormController",
@@ -32,13 +30,14 @@ use Drupal\custom_block\CustomBlockInterface;
  *       "delete" = "Drupal\custom_block\Form\CustomBlockDeleteForm",
  *       "default" = "Drupal\custom_block\CustomBlockFormController"
  *     },
- *     "translation" = "Drupal\custom_block\CustomBlockTranslationController"
+ *     "translation" = "Drupal\custom_block\CustomBlockTranslationHandler"
  *   },
  *   admin_permission = "administer blocks",
  *   base_table = "custom_block",
  *   revision_table = "custom_block_revision",
  *   links = {
  *     "canonical" = "custom_block.edit",
+ *     "delete-form" = "custom_block.delete",
  *     "edit-form" = "custom_block.edit",
  *     "admin-form" = "custom_block.type_edit"
  *   },
@@ -51,73 +50,10 @@ use Drupal\custom_block\CustomBlockInterface;
  *     "label" = "info",
  *     "uuid" = "uuid"
  *   },
- *   bundle_keys = {
- *     "bundle" = "type"
- *   },
  *   bundle_entity_type = "custom_block_type"
  * )
  */
 class CustomBlock extends ContentEntityBase implements CustomBlockInterface {
-
-  /**
-   * The block ID.
-   *
-   * @var \Drupal\Core\Field\FieldItemListInterface
-   */
-  public $id;
-
-  /**
-   * The block revision ID.
-   *
-   * @var \Drupal\Core\Field\FieldItemListInterface
-   */
-  public $revision_id;
-
-  /**
-   * Indicates whether this is the default block revision.
-   *
-   * The default revision of a block is the one loaded when no specific revision
-   * has been specified. Only default revisions are saved to the block_custom
-   * table.
-   *
-   * @var \Drupal\Core\Field\FieldItemListInterface
-   */
-  public $isDefaultRevision = TRUE;
-
-  /**
-   * The block UUID.
-   *
-   * @var \Drupal\Core\Field\FieldItemListInterface
-   */
-  public $uuid;
-
-  /**
-   * The custom block type (bundle).
-   *
-   * @var \Drupal\Core\Field\FieldItemListInterface
-   */
-  public $type;
-
-  /**
-   * The block language code.
-   *
-   * @var \Drupal\Core\Field\FieldItemListInterface
-   */
-  public $langcode;
-
-  /**
-   * The block description.
-   *
-   * @var \Drupal\Core\Field\FieldItemListInterface
-   */
-  public $info;
-
-  /**
-   * The block revision log message.
-   *
-   * @var \Drupal\Core\Field\FieldItemListInterface
-   */
-  public $log;
 
   /**
    * The theme the block is being created in.
@@ -144,7 +80,7 @@ class CustomBlock extends ContentEntityBase implements CustomBlockInterface {
    * {@inheritdoc}
    */
   public function getRevisionId() {
-    return $this->revision_id->value;
+    return $this->get('revision_id')->value;
   }
 
   /**
@@ -152,6 +88,7 @@ class CustomBlock extends ContentEntityBase implements CustomBlockInterface {
    */
   public function setTheme($theme) {
     $this->theme = $theme;
+    return $this;
   }
 
   /**
@@ -162,37 +99,10 @@ class CustomBlock extends ContentEntityBase implements CustomBlockInterface {
   }
 
   /**
-   * Initialize the object. Invoked upon construction and wake up.
-   */
-  protected function init() {
-    parent::init();
-    // We unset all defined properties except theme, so magic getters apply.
-    // $this->theme is a special use-case that is only used in the lifecycle of
-    // adding a new block using the block library.
-    unset($this->id);
-    unset($this->info);
-    unset($this->revision_id);
-    unset($this->log);
-    unset($this->uuid);
-    unset($this->type);
-    unset($this->new);
-  }
-
-  /**
    * {@inheritdoc}
    */
-  public function preSave(EntityStorageControllerInterface $storage_controller) {
-    parent::preSave($storage_controller);
-
-    // Before saving the custom block, set changed time.
-    $this->changed->value = REQUEST_TIME;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function postSave(EntityStorageControllerInterface $storage_controller, $update = TRUE) {
-    parent::postSave($storage_controller, $update);
+  public function postSave(EntityStorageInterface $storage, $update = TRUE) {
+    parent::postSave($storage, $update);
 
     // Invalidate the block cache to update custom block-based derivatives.
     \Drupal::service('plugin.manager.block')->clearCachedDefinitions();
@@ -202,14 +112,14 @@ class CustomBlock extends ContentEntityBase implements CustomBlockInterface {
    * {@inheritdoc}
    */
   public function getInstances() {
-    return entity_load_multiple_by_properties('block', array('plugin' => 'custom_block:' . $this->uuid->value));
+    return entity_load_multiple_by_properties('block', array('plugin' => 'custom_block:' . $this->uuid()));
   }
 
   /**
    * {@inheritdoc}
    */
-  public function preSaveRevision(EntityStorageControllerInterface $storage_controller, \stdClass $record) {
-    parent::preSaveRevision($storage_controller, $record);
+  public function preSaveRevision(EntityStorageInterface $storage, \stdClass $record) {
+    parent::preSaveRevision($storage, $record);
 
     if ($this->isNewRevision()) {
       // When inserting either a new custom block or a new custom_block
@@ -227,7 +137,7 @@ class CustomBlock extends ContentEntityBase implements CustomBlockInterface {
     elseif (isset($this->original) && (!isset($record->log) || $record->log === '')) {
       // If we are updating an existing custom_block without adding a new
       // revision and the user did not supply a log, keep the existing one.
-      $record->log = $this->original->log->value;
+      $record->log = $this->original->getRevisionLog();
     }
   }
 
@@ -244,11 +154,12 @@ class CustomBlock extends ContentEntityBase implements CustomBlockInterface {
   /**
    * {@inheritdoc}
    */
-  public static function baseFieldDefinitions($entity_type) {
+  public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields['id'] = FieldDefinition::create('integer')
       ->setLabel(t('Custom block ID'))
       ->setDescription(t('The custom block ID.'))
-      ->setReadOnly(TRUE);
+      ->setReadOnly(TRUE)
+      ->setSetting('unsigned', TRUE);
 
     $fields['uuid'] = FieldDefinition::create('uuid')
       ->setLabel(t('UUID'))
@@ -258,29 +169,39 @@ class CustomBlock extends ContentEntityBase implements CustomBlockInterface {
     $fields['revision_id'] = FieldDefinition::create('integer')
       ->setLabel(t('Revision ID'))
       ->setDescription(t('The revision ID.'))
-      ->setReadOnly(TRUE);
+      ->setReadOnly(TRUE)
+      ->setSetting('unsigned', TRUE);
 
     $fields['langcode'] = FieldDefinition::create('language')
       ->setLabel(t('Language code'))
       ->setDescription(t('The custom block language code.'));
 
     $fields['info'] = FieldDefinition::create('string')
-      ->setLabel(t('Subject'))
-      ->setDescription(t('The custom block name.'));
+      ->setLabel(t('Block description'))
+      ->setDescription(t('A brief description of your block.'))
+      ->setRevisionable(TRUE)
+      ->setRequired(TRUE)
+      ->setDisplayOptions('form', array(
+        'type' => 'string',
+        'weight' => -5,
+      ))
+      ->setDisplayConfigurable('form', TRUE);
 
-    $fields['type'] = FieldDefinition::create('string')
+    $fields['type'] = FieldDefinition::create('entity_reference')
       ->setLabel(t('Block type'))
-      ->setDescription(t('The block type.'));
+      ->setDescription(t('The block type.'))
+      ->setSetting('target_type', 'custom_block_type')
+      ->setSetting('max_length', EntityTypeInterface::BUNDLE_MAX_LENGTH);
 
     $fields['log'] = FieldDefinition::create('string')
       ->setLabel(t('Revision log message'))
-      ->setDescription(t('The revision log message.'));
+      ->setDescription(t('The revision log message.'))
+      ->setRevisionable(TRUE);
 
-    // @todo Convert to a "changed" field in https://drupal.org/node/2145103.
-    $fields['changed'] = FieldDefinition::create('integer')
+    $fields['changed'] = FieldDefinition::create('changed')
       ->setLabel(t('Changed'))
       ->setDescription(t('The time that the custom block was last edited.'))
-      ->setPropertyConstraints('value', array('EntityChanged' => array()));
+      ->setRevisionable(TRUE);
 
     return $fields;
   }
@@ -290,6 +211,29 @@ class CustomBlock extends ContentEntityBase implements CustomBlockInterface {
    */
   public function getChangedTime() {
     return $this->get('changed')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getRevisionLog() {
+    return $this->get('log')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setInfo($info) {
+    $this->set('info', $info);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setRevisionLog($log) {
+    $this->set('log', $log);
+    return $this;
   }
 
 }

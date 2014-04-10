@@ -7,15 +7,13 @@
 
 namespace Drupal\views\Plugin\views\sort;
 
-use Drupal\Component\Annotation\PluginID;
-
 /**
  * Basic sort handler for dates.
  *
  * This handler enables granularity, which is the ability to make dates
  * equivalent based upon nearness.
  *
- * @PluginID("date")
+ * @ViewsSort("date")
  */
 class Date extends SortPluginBase {
 

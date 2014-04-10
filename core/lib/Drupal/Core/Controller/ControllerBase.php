@@ -7,6 +7,8 @@
 
 namespace Drupal\Core\Controller;
 
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -28,7 +30,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
  *
  * @see \Drupal\Core\DependencyInjection\ContainerInjectionInterface
  */
-abstract class ControllerBase {
+abstract class ControllerBase implements ContainerInjectionInterface {
 
   /**
    * The entity manager.
@@ -36,6 +38,13 @@ abstract class ControllerBase {
    * @var \Drupal\Core\Entity\EntityManagerInterface
    */
   protected $entityManager;
+
+  /**
+   * The entity form builder.
+   *
+   * @var \Drupal\Core\Entity\EntityFormBuilderInterface
+   */
+  protected $entityFormBuilder;
 
   /**
    * The language manager.
@@ -94,6 +103,20 @@ abstract class ControllerBase {
   protected $moduleHandler;
 
   /**
+   * The form builder.
+   *
+   * @var \Drupal\Core\Form\FormBuilderInterface
+   */
+  protected $formBuilder;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static();
+  }
+
+  /**
    * Retrieves the entity manager service.
    *
    * @return \Drupal\Core\Entity\EntityManagerInterface
@@ -107,16 +130,29 @@ abstract class ControllerBase {
   }
 
   /**
+   * Retrieves the entity form builder.
+   *
+   * @return \Drupal\Core\Entity\EntityFormBuilderInterface
+   *   The entity form builder.
+   */
+  protected function entityFormBuilder() {
+    if (!$this->entityFormBuilder) {
+      $this->entityFormBuilder = $this->container()->get('entity.form_builder');
+    }
+    return $this->entityFormBuilder;
+  }
+
+  /**
    * Returns the requested cache bin.
    *
    * @param string $bin
    *   (optional) The cache bin for which the cache object should be returned,
-   *   defaults to 'cache'.
+   *   defaults to 'default'.
    *
    * @return \Drupal\Core\Cache\CacheBackendInterface
    *   The cache object associated with the specified bin.
    */
-  protected function cache($bin = 'cache') {
+  protected function cache($bin = 'default') {
     return $this->container()->get('cache.' . $bin);
   }
 
@@ -186,6 +222,18 @@ abstract class ControllerBase {
       $this->moduleHandler = $this->container()->get('module_handler');
     }
     return $this->moduleHandler;
+  }
+
+  /**
+   * Returns the form builder service.
+   *
+   * @return \Drupal\Core\Form\FormBuilderInterface
+   */
+  protected function formBuilder() {
+    if (!$this->formBuilder) {
+      $this->formBuilder = $this->container()->get('form_builder');
+    }
+    return $this->formBuilder;
   }
 
   /**
@@ -265,10 +313,15 @@ abstract class ControllerBase {
   /**
    * Returns the service container.
    *
+   * This method is marked private to prevent sub-classes from retrieving
+   * services from the container through it. Instead,
+   * \Drupal\Core\DependencyInjection\ContainerInjectionInterface should be used
+   * for injecting services.
+   *
    * @return \Symfony\Component\DependencyInjection\ContainerInterface $container
    *   The service container.
    */
-  protected function container() {
+  private function container() {
     return \Drupal::getContainer();
   }
 

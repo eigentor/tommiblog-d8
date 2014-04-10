@@ -7,14 +7,12 @@
 
 namespace Drupal\views\Plugin\views\argument;
 
-use Drupal\Component\Annotation\PluginID;
-
 /**
  * Argument handler that ignores the argument.
  *
  * @ingroup views_argument_handlers
  *
- * @PluginID("null")
+ * @ViewsArgument("null")
  */
 class Null extends ArgumentPluginBase {
 

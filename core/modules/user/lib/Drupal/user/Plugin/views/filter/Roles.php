@@ -7,7 +7,6 @@
 
 namespace Drupal\user\Plugin\views\filter;
 
-use Drupal\Component\Annotation\PluginID;
 use Drupal\views\Plugin\views\filter\ManyToOne;
 
 /**
@@ -15,7 +14,7 @@ use Drupal\views\Plugin\views\filter\ManyToOne;
  *
  * @ingroup views_filter_handlers
  *
- * @PluginID("user_roles")
+ * @ViewsFilter("user_roles")
  */
 class Roles extends ManyToOne {
 

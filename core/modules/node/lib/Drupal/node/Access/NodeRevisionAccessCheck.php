@@ -7,9 +7,9 @@
 
 namespace Drupal\node\Access;
 
-use Drupal\Core\Access\AccessCheckInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityManagerInterface;
+use Drupal\Core\Routing\Access\AccessInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\node\NodeInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,12 +18,12 @@ use Symfony\Component\Routing\Route;
 /**
  * Provides an access checker for node revisions.
  */
-class NodeRevisionAccessCheck implements AccessCheckInterface {
+class NodeRevisionAccessCheck implements AccessInterface {
 
   /**
    * The node storage.
    *
-   * @var \Drupal\Core\Entity\EntityStorageControllerInterface
+   * @var \Drupal\Core\Entity\EntityStorageInterface
    */
   protected $nodeStorage;
 
@@ -57,16 +57,9 @@ class NodeRevisionAccessCheck implements AccessCheckInterface {
    *   The database connection.
    */
   public function __construct(EntityManagerInterface $entity_manager, Connection $connection) {
-    $this->nodeStorage = $entity_manager->getStorageController('node');
+    $this->nodeStorage = $entity_manager->getStorage('node');
     $this->nodeAccess = $entity_manager->getAccessController('node');
     $this->connection = $connection;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function applies(Route $route) {
-    return array_key_exists('_access_node_revision', $route->getRequirements());
   }
 
   /**

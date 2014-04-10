@@ -13,8 +13,6 @@ use Drupal\views\Plugin\views\display\DisplayPluginBase;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\views\Plugin\views\join\JoinPluginBase;
 use Drupal\views\Plugin\views\HandlerBase;
-use Drupal\views\Annotation\ViewsQuery;
-use Drupal\Core\Annotation\Translation;
 use Drupal\views\ViewExecutable;
 use Drupal\views\Views;
 
@@ -1257,9 +1255,9 @@ class Sql extends QueryPluginBase {
         );
       }
 
-      foreach ($entity_information as $entity_type => $info) {
-        $entity_info = \Drupal::entityManager()->getDefinition($entity_type);
-        $base_field = empty($table['revision']) ? $entity_info['entity_keys']['id'] : $entity_info['entity_keys']['revision'];
+      foreach ($entity_information as $entity_type_id => $info) {
+        $entity_type = \Drupal::entityManager()->getDefinition($entity_type_id);
+        $base_field = empty($table['revision']) ? $entity_type->getKey('id') : $entity_type->getKey('revision');
         $this->addField($info['alias'], $base_field, '', $params);
       }
     }
@@ -1376,6 +1374,13 @@ class Sql extends QueryPluginBase {
         $query->addTag($access_tag);
         $count_query->addTag($access_tag);
       }
+
+      if (isset($base_table_data['table']['base']['query metadata'])) {
+        foreach ($base_table_data['table']['base']['query metadata'] as $key => $value) {
+          $query->addMetaData($key, $value);
+          $count_query->addMetaData($key, $value);
+        }
+      }
     }
 
     if ($query) {
@@ -1448,63 +1453,6 @@ class Sql extends QueryPluginBase {
   }
 
   /**
-   * Returns an array of all tables from the query that map to an entity type.
-   *
-   * Includes the base table and all relationships, if eligible.
-   *
-   * Available keys for each table:
-   * - base: The actual base table (i.e. "user" for an author relationship).
-   * - relationship_id: The id of the relationship, or "none".
-   * - alias: The alias used for the relationship.
-   * - entity_type: The entity type matching the base table.
-   * - revision: A boolean that specifies whether the table is a base table or
-   *   a revision table of the entity type.
-   *
-   * @return array
-   *   An array of table information, keyed by table alias.
-   */
-  public function getEntityTableInfo() {
-    // Start with the base table.
-    $entity_tables = array();
-    $views_data = Views::viewsData();
-    $base_table = $this->view->storage->get('base_table');
-    $base_table_data = $views_data->get($base_table);
-
-    if (isset($base_table_data['table']['entity type'])) {
-      $entity_tables[$base_table_data['table']['entity type']] = array(
-        'base' => $base_table,
-        'alias' => $base_table,
-        'relationship_id' => 'none',
-        'entity_type' => $base_table_data['table']['entity type'],
-        'revision' => FALSE,
-      );
-    }
-    // Include all relationships.
-    foreach ($this->view->relationship as $relationship_id => $relationship) {
-      $table_data = $views_data->get($relationship->definition['base']);
-      if (isset($table_data['table']['entity type'])) {
-        $entity_tables[$table_data['table']['entity type']] = array(
-          'base' => $relationship->definition['base'],
-          'relationship_id' => $relationship_id,
-          'alias' => $relationship->alias,
-          'entity_type' => $table_data['table']['entity type'],
-          'revision' => FALSE,
-        );
-      }
-    }
-
-    // Determine which of the tables are revision tables.
-    foreach ($entity_tables as $table_alias => $table) {
-      $info = \Drupal::entityManager()->getDefinition($table['entity_type']);
-      if (isset($info['revision table']) && $info['revision table'] == $table['base']) {
-        $entity_tables[$table_alias]['revision'] = TRUE;
-      }
-    }
-
-    return $entity_tables;
-  }
-
-  /**
    * Loads all entities contained in the passed-in $results.
    *.
    * If the entity belongs to the base table, then it gets stored in
@@ -1522,7 +1470,7 @@ class Sql extends QueryPluginBase {
     $ids_by_type = array();
     foreach ($entity_information as $entity_type => $info) {
       $entity_info = \Drupal::entityManager()->getDefinition($entity_type);
-      $id_key = empty($table['revision']) ? $entity_info['entity_keys']['id'] : $entity_info['entity_keys']['revision'];
+      $id_key = empty($table['revision']) ? $entity_info->getKey('id') : $entity_info->getKey('revision');
       $id_alias = $this->getFieldAlias($info['alias'], $id_key);
 
       foreach ($results as $index => $result) {

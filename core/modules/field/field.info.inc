@@ -29,14 +29,13 @@ use Drupal\field\Field;
 function field_info_cache_clear() {
   drupal_static_reset('field_view_mode_settings');
   drupal_static_reset('field_form_mode_settings');
-  drupal_static_reset('field_available_languages');
 
   // @todo: Remove this when field_attach_*_bundle() bundle management
   // functions are moved to the entity API.
   entity_info_cache_clear();
 
   // Clear typed data definitions.
-  \Drupal::typedData()->clearCachedDefinitions();
+  \Drupal::typedDataManager()->clearCachedDefinitions();
   \Drupal::service('plugin.manager.field.field_type')->clearCachedDefinitions();
   \Drupal::service('config.factory')->reset();
 
@@ -118,9 +117,12 @@ function field_info_fields() {
  *
  * @return
  *   The array of pseudo-field elements in the bundle.
+ *
+ * @deprecated in Drupal 8.x-dev. Use
+ *   \Drupal::entityManager()->getExtraFields() instead.
  */
 function field_info_extra_fields($entity_type, $bundle, $context) {
-  $info = Field::fieldInfo()->getBundleExtraFields($entity_type, $bundle);
+  $info = \Drupal::entityManager()->getExtraFields($entity_type, $bundle);
 
   return isset($info[$context]) ? $info[$context] : array();
 }

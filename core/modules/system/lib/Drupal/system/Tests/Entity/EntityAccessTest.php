@@ -15,9 +15,7 @@ use Drupal\Core\Entity\EntityAccessController;
 /**
  * Tests the entity access controller.
  */
-class EntityAccessTest extends EntityUnitTestBase  {
-
-  public static $modules = array('language', 'locale');
+class EntityAccessTest extends EntityLanguageTestBase  {
 
   public static function getInfo() {
     return array(
@@ -29,16 +27,7 @@ class EntityAccessTest extends EntityUnitTestBase  {
 
   function setUp() {
     parent::setUp();
-    $this->installSchema('system', array('variable', 'url_alias'));
-    $this->installConfig(array('language'));
-
-    // Create the default languages.
-    $default_language = language_save(language_default());
-    $languages = language_default_locked_languages($default_language->weight);
-    foreach ($languages as $language) {
-      language_save($language);
-    }
-
+    $this->installSchema('system', 'url_alias');
   }
 
   /**
@@ -60,8 +49,7 @@ class EntityAccessTest extends EntityUnitTestBase  {
    */
   function testEntityAccess() {
     // Set up a non-admin user that is allowed to view test entities.
-    global $user;
-    $user = $this->createUser(array('uid' => 2), array('view test entity'));
+    \Drupal::currentUser()->setAccount($this->createUser(array('uid' => 2), array('view test entity')));
     $entity = entity_create('entity_test', array(
       'name' => 'test',
     ));
@@ -89,15 +77,14 @@ class EntityAccessTest extends EntityUnitTestBase  {
    */
   function testEntityAccessDefaultController() {
     // The implementation requires that the global user id can be loaded.
-    global $user;
-    $user = $this->createUser(array('uid' => 2));
+    \Drupal::currentUser()->setAccount($this->createUser(array('uid' => 2)));
 
     // Check that the default access controller is used for entities that don't
     // have a specific access controller defined.
     $controller = $this->container->get('entity.manager')->getAccessController('entity_test_default_access');
     $this->assertTrue($controller instanceof EntityAccessController, 'The default entity controller is used for the entity_test_default_access entity type.');
 
-    $entity = entity_create('entity_test_default_access', array());
+    $entity = entity_create('entity_test_default_access');
     $this->assertEntityAccess(array(
       'create' => FALSE,
       'update' => FALSE,
@@ -112,8 +99,7 @@ class EntityAccessTest extends EntityUnitTestBase  {
   function testEntityTranslationAccess() {
 
     // Set up a non-admin user that is allowed to view test entity translations.
-    global $user;
-    $user = $this->createUser(array('uid' => 2), array('view test entity translations'));
+    \Drupal::currentUser()->setAccount($this->createUser(array('uid' => 2), array('view test entity translations')));
 
     // Create two test languages.
     foreach (array('foo', 'bar') as $langcode) {

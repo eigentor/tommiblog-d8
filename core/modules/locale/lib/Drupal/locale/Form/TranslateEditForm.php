@@ -8,6 +8,7 @@
 namespace Drupal\locale\Form;
 
 use Drupal\Component\Utility\String;
+use Drupal\Core\Render\Element;
 use Drupal\locale\SourceString;
 
 /**
@@ -29,16 +30,12 @@ class TranslateEditForm extends TranslateFormBase {
     $filter_values = $this->translateFilterValues();
     $langcode = $filter_values['langcode'];
 
-    drupal_static_reset('language_list');
+    $this->languageManager->reset();
     $languages = language_list();
 
     $langname = isset($langcode) ? $languages[$langcode]->name : "- None -";
 
-    $path = drupal_get_path('module', 'locale');
-    $form['#attached']['css'] = array(
-      $path . '/css/locale.admin.css',
-    );
-    $form['#attached']['library'][] = array('locale', 'drupal.locale.admin');
+    $form['#attached']['library'][] = 'locale/drupal.locale.admin';
 
     $form['langcode'] = array(
       '#type' => 'value',
@@ -147,7 +144,7 @@ class TranslateEditForm extends TranslateFormBase {
           }
         }
       }
-      if (count(element_children($form['strings']))) {
+      if (count(Element::children($form['strings']))) {
         $form['actions'] = array('#type' => 'actions');
         $form['actions']['submit'] = array(
           '#type' => 'submit',
@@ -166,8 +163,8 @@ class TranslateEditForm extends TranslateFormBase {
     foreach ($form_state['values']['strings'] as $lid => $translations) {
       foreach ($translations['translations'] as $key => $value) {
         if (!locale_string_is_safe($value)) {
-          form_set_error("strings][$lid][translations][$key", $form_state, $this->t('The submitted string contains disallowed HTML: %string', array('%string' => $value)));
-          form_set_error("translations][$langcode][$key", $form_state, $this->t('The submitted string contains disallowed HTML: %string', array('%string' => $value)));
+          $this->setFormError("strings][$lid][translations][$key", $form_state, $this->t('The submitted string contains disallowed HTML: %string', array('%string' => $value)));
+          $this->setFormError("translations][$langcode][$key", $form_state, $this->t('The submitted string contains disallowed HTML: %string', array('%string' => $value)));
           watchdog('locale', 'Attempted submission of a translation string with disallowed HTML: %string', array('%string' => $value), WATCHDOG_WARNING);
         }
       }

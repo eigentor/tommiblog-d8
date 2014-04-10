@@ -8,8 +8,9 @@
 namespace Drupal\forum\Form;
 
 use Drupal\Core\Entity\EntityManagerInterface;
+use Drupal\Core\Render\Element;
 use Drupal\taxonomy\Form\OverviewTerms;
-use Drupal\Core\Config\ConfigFactory;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -40,7 +41,7 @@ class Overview extends OverviewTerms {
   }
 
   /**
-   * {@inheritdoc}.
+   * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     return new static(
@@ -62,7 +63,7 @@ class Overview extends OverviewTerms {
   public function buildForm(array $form, array &$form_state) {
     $forum_config = $this->config('forum.settings');
     $vid = $forum_config->get('vocabulary');
-    $vocabulary = $this->entityManager->getStorageController('taxonomy_vocabulary')->load($vid);
+    $vocabulary = $this->entityManager->getStorage('taxonomy_vocabulary')->load($vid);
     if (!$vocabulary) {
       throw new NotFoundHttpException();
     }
@@ -70,21 +71,21 @@ class Overview extends OverviewTerms {
     // Build base taxonomy term overview.
     $form = parent::buildForm($form, $form_state, $vocabulary);
 
-    foreach (element_children($form['terms']) as $key) {
+    foreach (Element::children($form['terms']) as $key) {
       if (isset($form['terms'][$key]['#term'])) {
         $term = $form['terms'][$key]['#term'];
         $form['terms'][$key]['term']['#href'] = 'forum/' . $term->id();
         unset($form['terms'][$key]['operations']['#links']['delete']);
         if (!empty($term->forum_container->value)) {
           $form['terms'][$key]['operations']['#links']['edit']['title'] = $this->t('edit container');
-          $form['terms'][$key]['operations']['#links']['edit']['href'] = 'admin/structure/forum/edit/container/' . $term->id();
+          $form['terms'][$key]['operations']['#links']['edit']['route_name'] = 'forum.edit_container';
           // We don't want the redirect from the link so we can redirect the
           // delete action.
           unset($form['terms'][$key]['operations']['#links']['edit']['query']['destination']);
         }
         else {
           $form['terms'][$key]['operations']['#links']['edit']['title'] = $this->t('edit forum');
-          $form['terms'][$key]['operations']['#links']['edit']['href'] = 'admin/structure/forum/edit/forum/' . $term->id();
+          $form['terms'][$key]['operations']['#links']['edit']['route_name'] = 'forum.edit_forum';
           // We don't want the redirect from the link so we can redirect the
           // delete action.
           unset($form['terms'][$key]['operations']['#links']['edit']['query']['destination']);

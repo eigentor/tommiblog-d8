@@ -30,9 +30,7 @@ class ModuleHandler implements ModuleHandlerInterface {
   /**
    * List of installed modules.
    *
-   * @var array
-   *   An associative array whose keys are the names of the modules and whose
-   *   values are the module filenames.
+   * @var \Drupal\Core\Extension\Extension[]
    */
   protected $moduleList;
 
@@ -69,14 +67,17 @@ class ModuleHandler implements ModuleHandlerInterface {
    *
    * @param array $module_list
    *   An associative array whose keys are the names of installed modules and
-   *   whose values are the module filenames. This is normally the
+   *   whose values are Extension class parameters. This is normally the
    *   %container.modules% parameter being set up by DrupalKernel.
    *
    * @see \Drupal\Core\DrupalKernel
    * @see \Drupal\Core\CoreServiceProvider
    */
   public function __construct(array $module_list = array()) {
-    $this->moduleList = $module_list;
+    $this->moduleList = array();
+    foreach ($module_list as $name => $module) {
+      $this->moduleList[$name] = new Extension($module['type'], $module['pathname'], $module['filename']);
+    }
   }
 
   /**
@@ -88,8 +89,7 @@ class ModuleHandler implements ModuleHandlerInterface {
     }
 
     if (isset($this->moduleList[$name])) {
-      $filename = $this->moduleList[$name];
-      include_once DRUPAL_ROOT . '/' . $filename;
+      $this->moduleList[$name]->load();
       $this->loadedFiles[$name] = TRUE;
       return TRUE;
     }
@@ -101,8 +101,8 @@ class ModuleHandler implements ModuleHandlerInterface {
    */
   public function loadAll() {
     if (!$this->loaded) {
-      foreach ($this->moduleList as $module => $filename) {
-        $this->load($module);
+      foreach ($this->moduleList as $name => $module) {
+        $this->load($name);
       }
       $this->loaded = TRUE;
     }
@@ -141,15 +141,46 @@ class ModuleHandler implements ModuleHandlerInterface {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function addModule($name, $path) {
+    $this->add('module', $name, $path);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function addProfile($name, $path) {
+    $this->add('profile', $name, $path);
+  }
+
+  /**
+   * Adds a module or profile to the list of currently active modules.
+   *
+   * @param string $type
+   *   The extension type; either 'module' or 'profile'.
+   * @param string $name
+   *   The module name; e.g., 'node'.
+   * @param string $path
+   *   The module path; e.g., 'core/modules/node'.
+   */
+  protected function add($type, $name, $path) {
+    $pathname = "$path/$name.info.yml";
+    $filename = file_exists("$path/$name.$type") ? "$name.$type" : NULL;
+    $this->moduleList[$name] = new Extension($type, $pathname, $filename);
+    $this->resetImplementations();
+  }
+
+  /**
    * Implements \Drupal\Core\Extension\ModuleHandlerInterface::buildModuleDependencies().
    */
   public function buildModuleDependencies(array $modules) {
     foreach ($modules as $module) {
-      $graph[$module->name]['edges'] = array();
+      $graph[$module->getName()]['edges'] = array();
       if (isset($module->info['dependencies']) && is_array($module->info['dependencies'])) {
         foreach ($module->info['dependencies'] as $dependency) {
           $dependency_data = static::parseDependency($dependency);
-          $graph[$module->name]['edges'][$dependency_data['name']] = $dependency_data;
+          $graph[$module->getName()]['edges'][$dependency_data['name']] = $dependency_data;
         }
       }
     }
@@ -190,7 +221,7 @@ class ModuleHandler implements ModuleHandlerInterface {
 
     $name = $name ?: $module;
     if (isset($this->moduleList[$module])) {
-      $file = DRUPAL_ROOT . '/' . dirname($this->moduleList[$module]) . "/$name.$type";
+      $file = DRUPAL_ROOT . '/' . $this->moduleList[$module]->getPath() . "/$name.$type";
       if (is_file($file)) {
         require_once $file;
         return $file;
@@ -264,7 +295,7 @@ class ModuleHandler implements ModuleHandlerInterface {
   /**
    * Implements \Drupal\Core\Extension\ModuleHandlerInterface::invoke().
    */
-  public function invoke($module, $hook, $args = array()) {
+  public function invoke($module, $hook, array $args = array()) {
     if (!$this->implementsHook($module, $hook)) {
       return;
     }
@@ -275,7 +306,7 @@ class ModuleHandler implements ModuleHandlerInterface {
   /**
    * Implements \Drupal\Core\Extension\ModuleHandlerInterface::invokeAll().
    */
-  public function invokeAll($hook, $args = array()) {
+  public function invokeAll($hook, array $args = array()) {
     $return = array();
     $implementations = $this->getImplementations($hook);
     foreach ($implementations as $module) {
@@ -382,7 +413,7 @@ class ModuleHandler implements ModuleHandlerInterface {
       if (isset($theme)) {
         $theme_keys = array();
         foreach ($base_theme_info as $base) {
-          $theme_keys[] = $base->name;
+          $theme_keys[] = $base->getName();
         }
         $theme_keys[] = $theme;
         foreach ($theme_keys as $theme_key) {
@@ -426,7 +457,7 @@ class ModuleHandler implements ModuleHandlerInterface {
     $hook_info = $this->getHookInfo();
     foreach ($this->moduleList as $module => $filename) {
       $include_file = isset($hook_info[$hook]['group']) && $this->loadInclude($module, 'inc', $module . '.' . $hook_info[$hook]['group']);
-      // Since $this->hookImplements() may needlessly try to load the include
+      // Since $this->implementsHook() may needlessly try to load the include
       // file again, function_exists() is used directly here.
       if (function_exists($module . '_' . $hook)) {
         $this->implementations[$hook][$module] = $include_file ? $hook_info[$hook]['group'] : FALSE;
@@ -502,7 +533,7 @@ class ModuleHandler implements ModuleHandlerInterface {
    * {@inheritdoc}
    */
   public function install(array $module_list, $enable_dependencies = TRUE) {
-    $module_config = \Drupal::config('system.module');
+    $extension_config = \Drupal::config('core.extension');
     if ($enable_dependencies) {
       // Get all module data so we can find dependencies and sort.
       $module_data = system_rebuild_module_data();
@@ -513,7 +544,7 @@ class ModuleHandler implements ModuleHandlerInterface {
       }
 
       // Only process currently uninstalled modules.
-      $installed_modules = $module_config->get('enabled') ?: array();
+      $installed_modules = $extension_config->get('module') ?: array();
       if (!$module_list = array_diff_key($module_list, $installed_modules)) {
         // Nothing to do. All modules already installed.
         return TRUE;
@@ -551,9 +582,15 @@ class ModuleHandler implements ModuleHandlerInterface {
     // Required for module installation checks.
     include_once DRUPAL_ROOT . '/core/includes/install.inc';
 
+    /** @var \Drupal\Core\Config\ConfigInstaller $config_installer */
+    $config_installer = \Drupal::service('config.installer');
+    $sync_status = $config_installer->isSyncing();
+    if ($sync_status) {
+      $source_storage = $config_installer->getSourceStorage();
+    }
     $modules_installed = array();
     foreach ($module_list as $module) {
-      $enabled = $module_config->get("enabled.$module") !== NULL;
+      $enabled = $extension_config->get("module.$module") !== NULL;
       if (!$enabled) {
         // Throw an exception if the module name is too long.
         if (strlen($module) > DRUPAL_EXTENSION_NAME_MAX_LENGTH) {
@@ -563,9 +600,9 @@ class ModuleHandler implements ModuleHandlerInterface {
           )));
         }
 
-        $module_config
-          ->set("enabled.$module", 0)
-          ->set('enabled', module_config_sort($module_config->get('enabled')))
+        $extension_config
+          ->set("module.$module", 0)
+          ->set('module', module_config_sort($extension_config->get('module')))
           ->save();
 
         // Prepare the new module list, sorted by weight, including filenames.
@@ -579,14 +616,17 @@ class ModuleHandler implements ModuleHandlerInterface {
         // contained in the configured enabled modules, we assume a weight of 0.
         $current_module_filenames = $this->getModuleList();
         $current_modules = array_fill_keys(array_keys($current_module_filenames), 0);
-        $current_modules = module_config_sort(array_merge($current_modules, $module_config->get('enabled')));
+        $current_modules = module_config_sort(array_merge($current_modules, $extension_config->get('module')));
         $module_filenames = array();
         foreach ($current_modules as $name => $weight) {
           if (isset($current_module_filenames[$name])) {
             $module_filenames[$name] = $current_module_filenames[$name];
           }
           else {
-            $module_filenames[$name] = drupal_get_filename('module', $name);
+            $module_path = drupal_get_path('module', $name);
+            $pathname = "$module_path/$name.info.yml";
+            $filename = file_exists($module_path . "/$name.module") ? "$name.module" : NULL;
+            $module_filenames[$name] = new Extension('module', $pathname, $filename);
           }
         }
 
@@ -599,9 +639,10 @@ class ModuleHandler implements ModuleHandlerInterface {
         $this->load($module);
         module_load_install($module);
 
-        // Flush theme info caches, since (testing) modules can implement
-        // hook_system_theme_info() to register additional themes.
-        system_list_reset();
+        // Clear the static cache of system_rebuild_module_data() to pick up the
+        // new module, since it merges the installation status of modules into
+        // its statically cached list.
+        drupal_static_reset('system_rebuild_module_data');
 
         // Update the kernel to include it.
         // This reboots the kernel to register the module's bundle and its
@@ -621,19 +662,34 @@ class ModuleHandler implements ModuleHandlerInterface {
         // Allow modules to react prior to the installation of a module.
         $this->invokeAll('module_preinstall', array($module));
 
-        // Clear the entity info cache before importing new configuration.
-        entity_info_cache_clear();
-
         // Now install the module's schema if necessary.
         drupal_install_schema($module);
 
-        // Set the schema version to the number of the last update provided
-        // by the module.
+        // Clear plugin manager caches.
+        \Drupal::getContainer()->get('plugin.cache_clearer')->clearCachedDefinitions();
+
+        // Set the schema version to the number of the last update provided by
+        // the module, or the minimum core schema version.
+        $version = \Drupal::CORE_MINIMUM_SCHEMA_VERSION;
         $versions = drupal_get_schema_versions($module);
-        $version = $versions ? max($versions) : SCHEMA_INSTALLED;
+        if ($versions) {
+          $version = max(max($versions), $version);
+        }
 
         // Install default configuration of the module.
-        config_install_default_config('module', $module);
+        $config_installer = \Drupal::service('config.installer');
+        if ($sync_status) {
+          $config_installer
+            ->setSyncing(TRUE)
+            ->setSourceStorage($source_storage);
+        }
+        else {
+          // If we're not in a config synchronisation reset the source storage
+          // so that the extension install storage will pick up the new
+          // configuration.
+          $config_installer->resetSourceStorage();
+        }
+        \Drupal::service('config.installer')->installDefaultConfig('module', $module);
 
         // If the module has no current updates, but has some that were
         // previously removed, set the version to the value of
@@ -674,8 +730,8 @@ class ModuleHandler implements ModuleHandlerInterface {
     }
 
     // Only process currently installed modules.
-    $module_config = \Drupal::config('system.module');
-    $installed_modules = $module_config->get('enabled') ?: array();
+    $extension_config = \Drupal::config('core.extension');
+    $installed_modules = $extension_config->get('module') ?: array();
     if (!$module_list = array_intersect_key($module_list, $installed_modules)) {
       // Nothing to do. All modules already uninstalled.
       return TRUE;
@@ -694,7 +750,7 @@ class ModuleHandler implements ModuleHandlerInterface {
 
           // Skip already uninstalled modules.
           if (isset($installed_modules[$dependent]) && !isset($module_list[$dependent]) && $dependent != $profile) {
-            $module_list[$dependent] = TRUE;
+            $module_list[$dependent] = $dependent;
           }
         }
       }
@@ -721,13 +777,15 @@ class ModuleHandler implements ModuleHandlerInterface {
       // Uninstall the module.
       module_load_install($module);
       $this->invoke($module, 'uninstall');
-      drupal_uninstall_schema($module);
 
       // Remove all configuration belonging to the module.
-      config_uninstall_default_config('module', $module);
+      \Drupal::service('config.manager')->uninstall('module', $module);
+
+      // Remove the schema.
+      drupal_uninstall_schema($module);
 
       // Remove the module's entry from the config.
-      $module_config->clear("enabled.$module")->save();
+      $extension_config->clear("module.$module")->save();
 
       // Update the module handler to remove the module.
       // The current ModuleHandler instance is obsolete with the kernel rebuild
@@ -739,13 +797,12 @@ class ModuleHandler implements ModuleHandlerInterface {
       // Remove any potential cache bins provided by the module.
       $this->removeCacheBins($module);
 
-      // Refresh the system list to exclude the uninstalled modules.
-      // @todo Only needed to rebuild theme info.
-      // @see system_list_reset()
-      system_list_reset();
+      // Clear the static cache of system_rebuild_module_data() to pick up the
+      // new module, since it merges the installation status of modules into
+      // its statically cached list.
+      drupal_static_reset('system_rebuild_module_data');
 
-      // Clear the entity info cache.
-      entity_info_cache_clear();
+      \Drupal::getContainer()->get('plugin.cache_clearer')->clearCachedDefinitions();
 
       // Update the kernel to exclude the uninstalled modules.
       \Drupal::service('kernel')->updateModules($module_filenames, $module_filenames);
@@ -756,6 +813,9 @@ class ModuleHandler implements ModuleHandlerInterface {
       watchdog('system', '%module module uninstalled.', array('%module' => $module), WATCHDOG_INFO);
 
       $schema_store->delete($module);
+
+      // Make sure any route data is also removed for this module.
+      \Drupal::service('router.dumper')->dump(array('provider' => $module));
     }
     drupal_get_installed_schema_version(NULL, TRUE);
 
@@ -812,9 +872,10 @@ class ModuleHandler implements ModuleHandlerInterface {
    */
   public function getModuleDirectories() {
     $dirs = array();
-    foreach ($this->getModuleList() as $module => $filename) {
-      $dirs[$module] = DRUPAL_ROOT . '/' . dirname($filename);
+    foreach ($this->getModuleList() as $name => $module) {
+      $dirs[$name] = DRUPAL_ROOT . '/' . $module->getPath();
     }
     return $dirs;
   }
+
 }

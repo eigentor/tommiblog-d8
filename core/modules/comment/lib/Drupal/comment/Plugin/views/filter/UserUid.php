@@ -8,7 +8,6 @@
 namespace Drupal\comment\Plugin\views\filter;
 
 use Drupal\views\Plugin\views\filter\FilterPluginBase;
-use Drupal\Component\Annotation\PluginID;
 
 /**
  * Filter handler to accept a user id to check for nodes that user posted or
@@ -16,7 +15,7 @@ use Drupal\Component\Annotation\PluginID;
  *
  * @ingroup views_filter_handlers
  *
- * @PluginID("comment_user_uid")
+ * @ViewsFilter("comment_user_uid")
  */
 class UserUid extends FilterPluginBase {
 

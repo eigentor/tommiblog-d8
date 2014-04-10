@@ -4,6 +4,8 @@
  * Install, update and uninstall functions for the standard installation profile.
  */
 
+use Drupal\comment\Plugin\Field\FieldType\CommentItemInterface;
+
 /**
  * Implements hook_install().
  *
@@ -25,15 +27,15 @@ function standard_install() {
   \Drupal::config('system.site')->set('page.front', 'node')->save();
 
   // Add comment field to article node type.
-  \Drupal::service('comment.manager')->addDefaultField('node', 'article', 'comment', COMMENT_OPEN);
+  \Drupal::service('comment.manager')->addDefaultField('node', 'article', 'comment', CommentItemInterface::OPEN);
 
   // Allow visitor account creation with administrative approval.
   $user_settings = \Drupal::config('user.settings');
   $user_settings->set('register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL)->save();
 
   // Enable default permissions for system roles.
-  user_role_grant_permissions(DRUPAL_ANONYMOUS_RID, array('access content', 'access comments'));
-  user_role_grant_permissions(DRUPAL_AUTHENTICATED_RID, array('access content', 'access comments', 'post comments', 'skip comment approval'));
+  user_role_grant_permissions(DRUPAL_ANONYMOUS_RID, array('access comments'));
+  user_role_grant_permissions(DRUPAL_AUTHENTICATED_RID, array('access comments', 'post comments', 'skip comment approval'));
 
   // Enable all permissions for the administrator role.
   user_role_grant_permissions('administrator', array_keys(\Drupal::moduleHandler()->invokeAll('permission')));
@@ -54,29 +56,26 @@ function standard_install() {
   $menu_link->save();
 
   // Enable the Contact link in the footer menu.
-  menu_link_maintain('system', 'enable', 'contact');
+  menu_link_maintain('contact', 'enable', 'contact');
   user_role_grant_permissions(DRUPAL_ANONYMOUS_RID, array('access site-wide contact form'));
   user_role_grant_permissions(DRUPAL_AUTHENTICATED_RID, array('access site-wide contact form'));
 
   // Populate the default shortcut set.
-  $shortcut_set = shortcut_set_load('default');
-  $menu_link = entity_create('menu_link', array(
-    'link_path' => 'node/add',
-    'link_title' => t('Add content'),
+  $shortcut = entity_create('shortcut', array(
+    'shortcut_set' => 'default',
+    'title' => t('Add content'),
     'weight' => -20,
+    'path' => 'node/add',
   ));
-  $menu_link->save();
-  $shortcut_set->links[$menu_link->uuid()] = $menu_link;
+  $shortcut->save();
 
-  $menu_link = entity_create('menu_link', array(
-    'link_path' => 'admin/content',
-    'link_title' => t('All content'),
+  $shortcut = entity_create('shortcut', array(
+    'shortcut_set' => 'default',
+    'title' => t('All content'),
     'weight' => -19,
+    'path' => 'admin/content',
   ));
-  $menu_link->save();
-  $shortcut_set->links[$menu_link->uuid()] = $menu_link;
-
-  $shortcut_set->save();
+  $shortcut->save();
 
   // Enable the admin theme.
   theme_enable(array('seven'));

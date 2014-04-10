@@ -8,7 +8,6 @@
 namespace Drupal\language\Plugin\views\field;
 
 use Drupal\views\Plugin\views\field\FieldPluginBase;
-use Drupal\Component\Annotation\PluginID;
 use Drupal\views\ResultRow;
 
 /**
@@ -16,7 +15,7 @@ use Drupal\views\ResultRow;
  *
  * @ingroup views_field_handlers
  *
- * @PluginID("language")
+ * @ViewsField("language")
  */
 class LanguageField extends FieldPluginBase {
 

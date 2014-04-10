@@ -7,7 +7,6 @@
 
 namespace Drupal\Core\Cache;
 
-use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\DestructableInterface;
 use Drupal\Core\Lock\LockBackendInterface;
 
@@ -23,6 +22,8 @@ use Drupal\Core\Lock\LockBackendInterface;
  * CacheCollector->has() needs to correctly return (equivalent to
  * array_key_exists() vs. isset()). This should not be necessary in the majority
  * of cases.
+ *
+ * @ingroup cache
  */
 abstract class CacheCollector implements CacheCollectorInterface, DestructableInterface {
 
@@ -242,7 +243,7 @@ abstract class CacheCollector implements CacheCollectorInterface, DestructableIn
       foreach ($this->keysToRemove as $delete_key) {
         unset($data[$delete_key]);
       }
-      $this->cache->set($this->cid, $data, CacheBackendInterface::CACHE_PERMANENT, $this->tags);
+      $this->cache->set($this->cid, $data, Cache::PERMANENT, $this->tags);
       if ($lock) {
         $this->lock->release($lock_name);
       }
@@ -268,7 +269,7 @@ abstract class CacheCollector implements CacheCollectorInterface, DestructableIn
   public function clear() {
     $this->reset();
     if ($this->tags) {
-      $this->cache->deleteTags($this->tags);
+      Cache::deleteTags($this->tags);
     }
     else {
       $this->cache->delete($this->cid);

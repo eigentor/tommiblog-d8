@@ -247,13 +247,12 @@ abstract class Tasks {
     $form['advanced_options'] = array(
       '#type' => 'details',
       '#title' => t('Advanced options'),
-      '#collapsed' => TRUE,
       '#weight' => 10,
     );
 
     $profile = drupal_get_profile();
     $db_prefix = ($profile == 'standard') ? 'drupal_' : $profile . '_';
-    $form['advanced_options']['db_prefix'] = array(
+    $form['advanced_options']['prefix'] = array(
       '#type' => 'textfield',
       '#title' => t('Table name prefix'),
       '#default_value' => '',
@@ -277,7 +276,7 @@ abstract class Tasks {
       '#title' => t('Port number'),
       '#default_value' => empty($database['port']) ? '' : $database['port'],
       '#min' => 0,
-      '#max' => 65536,
+      '#max' => 65535,
     );
 
     return $form;
@@ -300,7 +299,7 @@ abstract class Tasks {
 
     // Verify the table prefix.
     if (!empty($database['prefix']) && is_string($database['prefix']) && !preg_match('/^[A-Za-z0-9_.]+$/', $database['prefix'])) {
-      $errors[$database['driver'] . '][advanced_options][db_prefix'] = t('The database table prefix you have entered, %prefix, is invalid. The table prefix can only contain alphanumeric characters, periods, or underscores.', array('%prefix' => $database['prefix']));
+      $errors[$database['driver'] . '][prefix'] = t('The database table prefix you have entered, %prefix, is invalid. The table prefix can only contain alphanumeric characters, periods, or underscores.', array('%prefix' => $database['prefix']));
     }
 
     return $errors;

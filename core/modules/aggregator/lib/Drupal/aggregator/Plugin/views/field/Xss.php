@@ -8,14 +8,13 @@
 namespace Drupal\aggregator\Plugin\views\field;
 
 use Drupal\views\Plugin\views\field\Xss as XssBase;
-use Drupal\Component\Annotation\PluginID;
 
 /**
  * Filters htmls tags from item.
  *
  * @ingroup views_field_handlers
  *
- * @PluginID("aggregator_xss")
+ * @ViewsField("aggregator_xss")
  */
 class Xss extends XssBase {
 

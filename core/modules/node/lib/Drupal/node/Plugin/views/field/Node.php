@@ -11,7 +11,6 @@ use Drupal\views\ResultRow;
 use Drupal\views\ViewExecutable;
 use Drupal\views\Plugin\views\display\DisplayPluginBase;
 use Drupal\views\Plugin\views\field\FieldPluginBase;
-use Drupal\Component\Annotation\PluginID;
 
 /**
  * Field handler to provide simple renderer that allows linking to a node.
@@ -20,7 +19,7 @@ use Drupal\Component\Annotation\PluginID;
  *
  * @ingroup views_field_handlers
  *
- * @PluginID("node")
+ * @ViewsField("node")
  */
 class Node extends FieldPluginBase {
 

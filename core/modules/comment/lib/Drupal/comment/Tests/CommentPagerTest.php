@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Definition of Drupal\comment\Tests\CommentPagerTest.
+ * Contains \Drupal\comment\Tests\CommentPagerTest.
  */
 
 namespace Drupal\comment\Tests;
@@ -268,4 +268,87 @@ class CommentPagerTest extends CommentTestBase {
       $this->assertEqual($expected_page, $returned_page, format_string('Threaded mode, @new replies: expected page @expected, returned page @returned.', array('@new' => $new_replies, '@expected' => $expected_page, '@returned' => $returned_page)));
     }
   }
+
+  /**
+   * Confirms comment paging works correctly with two pagers.
+   */
+  function testTwoPagers() {
+    // Add another field to article content-type.
+    $this->container->get('comment.manager')->addDefaultField('node', 'article', 'comment_2');
+    // Set default to display comment list with unique pager id.
+    entity_get_display('node', 'article', 'default')
+      ->setComponent('comment_2', array(
+        'label' => 'hidden',
+        'type' => 'comment_default',
+        'weight' => 30,
+        'settings' => array(
+          'pager_id' => 1,
+        )
+      ))
+      ->save();
+
+    // Make sure pager appears in formatter summary and settings form.
+    $account = $this->drupalCreateUser(array('administer node display'));
+    $this->drupalLogin($account);
+    $this->drupalGet('admin/structure/types/manage/article/display');
+    $this->assertNoText(t('Pager ID: @id', array('@id' => 0)), 'No summary for standard pager');
+    $this->assertText(t('Pager ID: @id', array('@id' => 1)));
+    $this->drupalPostAjaxForm(NULL, array(), 'comment_settings_edit');
+    // Change default pager to 2.
+    $this->drupalPostForm(NULL, array('fields[comment][settings_edit_form][settings][pager_id]' => 2), t('Save'));
+    $this->assertText(t('Pager ID: @id', array('@id' => 2)));
+    // Revert the changes back.
+    $this->drupalPostAjaxForm(NULL, array(), 'comment_settings_edit');
+    $this->drupalPostForm(NULL, array('fields[comment][settings_edit_form][settings][pager_id]' => 0), t('Save'));
+    $this->assertNoText(t('Pager ID: @id', array('@id' => 0)), 'No summary for standard pager');
+
+    $this->drupalLogin($this->admin_user);
+
+    // Add a new node with both comment fields open.
+    $node = $this->drupalCreateNode(array('type' => 'article', 'promote' => 1, 'uid' => $this->web_user->id()));
+    // Set comment options.
+    $comments = array();
+    foreach (array('comment', 'comment_2') as $field_name) {
+      $this->setCommentForm(TRUE, $field_name);
+      $this->setCommentSubject(TRUE, $field_name);
+      $this->setCommentPreview(DRUPAL_OPTIONAL, $field_name);
+      $this->setCommentSettings('default_mode', COMMENT_MODE_FLAT, 'Comment paging changed.', $field_name);
+
+      // Set comments to one per page so that we are able to test paging without
+      // needing to insert large numbers of comments.
+      $this->setCommentsPerPage(1, $field_name);
+      for ($i = 0; $i < 3; $i++) {
+        $comment = t('Comment @count on field @field', array(
+          '@count' => $i + 1,
+          '@field' => $field_name,
+        ));
+        $comments[] = $this->postComment($node, $comment, $comment, TRUE, $field_name);
+      }
+    }
+
+    // Check the first page of the node, and confirm the correct comments are
+    // shown.
+    $this->drupalGet('node/' . $node->id());
+    $this->assertRaw(t('next'), 'Paging links found.');
+    $this->assertRaw('Comment 1 on field comment');
+    $this->assertRaw('Comment 1 on field comment_2');
+    // Navigate to next page of field 1.
+    $this->clickLink('next ›');
+    // Check only one pager updated.
+    $this->assertRaw('Comment 2 on field comment');
+    $this->assertRaw('Comment 1 on field comment_2');
+    // Return to page 1.
+    $this->drupalGet('node/' . $node->id());
+    // Navigate to next page of field 2.
+    $this->clickLink('next ›', 1);
+    // Check only one pager updated.
+    $this->assertRaw('Comment 1 on field comment');
+    $this->assertRaw('Comment 2 on field comment_2');
+    // Navigate to next page of field 1.
+    $this->clickLink('next ›');
+    // Check only one pager updated.
+    $this->assertRaw('Comment 2 on field comment');
+    $this->assertRaw('Comment 2 on field comment_2');
+  }
+
 }

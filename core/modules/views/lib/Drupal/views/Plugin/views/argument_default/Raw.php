@@ -7,8 +7,6 @@
 
 namespace Drupal\views\Plugin\views\argument_default;
 
-use Drupal\views\Annotation\ViewsArgumentDefault;
-use Drupal\Core\Annotation\Translation;
 use Drupal\Core\Path\AliasManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -46,14 +44,14 @@ class Raw extends ArgumentDefaultPluginBase {
    *   A configuration array containing information about the plugin instance.
    * @param string $plugin_id
    *   The plugin_id for the plugin instance.
-   * @param array $plugin_definition
+   * @param mixed $plugin_definition
    *   The plugin implementation definition.
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   The request object.
    * @param \Drupal\Core\Path\AliasManagerInterface $alias_manager
    *   The alias manager.
    */
-  public function __construct(array $configuration, $plugin_id, array $plugin_definition, Request $request, AliasManagerInterface $alias_manager) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, Request $request, AliasManagerInterface $alias_manager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
     $this->request = $request;
@@ -63,7 +61,7 @@ class Raw extends ArgumentDefaultPluginBase {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, array $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
       $configuration,
       $plugin_id,

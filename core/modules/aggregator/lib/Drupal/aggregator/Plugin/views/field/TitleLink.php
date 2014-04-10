@@ -11,7 +11,6 @@ use Drupal\views\Plugin\views\display\DisplayPluginBase;
 use Drupal\views\Plugin\views\field\FieldPluginBase;
 use Drupal\views\ResultRow;
 use Drupal\views\ViewExecutable;
-use Drupal\Component\Annotation\PluginID;
 
 /**
  * Defines a field handler that turns an item's title into a clickable link to
@@ -19,7 +18,7 @@ use Drupal\Component\Annotation\PluginID;
  *
  * @ingroup views_field_handlers
  *
- * @PluginID("aggregator_title_link")
+ * @ViewsField("aggregator_title_link")
  */
 class TitleLink extends FieldPluginBase {
 

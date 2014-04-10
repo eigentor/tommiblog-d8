@@ -7,14 +7,12 @@
 
 namespace Drupal\views\Plugin\views\filter;
 
-use Drupal\Component\Annotation\PluginID;
-
 /**
  * Default implementation of the base filter plugin.
  *
  * @ingroup views_filter_handlers
  *
- * @PluginID("standard")
+ * @ViewsFilter("standard")
  */
 class Standard extends FilterPluginBase {
 

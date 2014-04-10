@@ -29,6 +29,7 @@ class SimpletestSettingsForm extends ConfigFormBase {
     $form['general'] = array(
       '#type' => 'details',
       '#title' => $this->t('General'),
+      '#open' => TRUE,
     );
     $form['general']['simpletest_clear_results'] = array(
       '#type' => 'checkbox',
@@ -47,7 +48,6 @@ class SimpletestSettingsForm extends ConfigFormBase {
       '#type' => 'details',
       '#title' => $this->t('HTTP authentication'),
       '#description' => $this->t('HTTP auth settings to be used by the SimpleTest browser during testing. Useful when the site requires basic HTTP authentication.'),
-      '#collapsed' => TRUE,
     );
     $form['httpauth']['simpletest_httpauth_method'] = array(
       '#type' => 'select',
@@ -97,7 +97,7 @@ class SimpletestSettingsForm extends ConfigFormBase {
     // If a password was provided but a username wasn't, the credentials are
     // incorrect, so throw an error.
     if (empty($form_state['values']['simpletest_httpauth_username']) && !empty($form_state['values']['simpletest_httpauth_password'])) {
-      form_set_error('simpletest_httpauth_username', $form_state, $this->t('HTTP authentication credentials must include a username in addition to a password.'));
+      $this->setFormError('simpletest_httpauth_username', $form_state, $this->t('HTTP authentication credentials must include a username in addition to a password.'));
     }
 
     parent::validateForm($form, $form_state);

@@ -8,14 +8,13 @@
 namespace Drupal\node\Plugin\views\filter;
 
 use Drupal\views\Plugin\views\filter\FilterPluginBase;
-use Drupal\Component\Annotation\PluginID;
 
 /**
  * Filter by published status.
  *
  * @ingroup views_filter_handlers
  *
- * @PluginID("node_status")
+ * @ViewsFilter("node_status")
  */
 class Status extends FilterPluginBase {
 

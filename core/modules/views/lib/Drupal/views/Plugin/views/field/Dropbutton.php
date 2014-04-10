@@ -7,7 +7,6 @@
 
 namespace Drupal\views\Plugin\views\field;
 
-use Drupal\Component\Annotation\PluginID;
 use Drupal\views\ResultRow;
 
 /**
@@ -15,7 +14,7 @@ use Drupal\views\ResultRow;
  *
  * @ingroup views_field_handlers
  *
- * @PluginID("dropbutton")
+ * @ViewsField("dropbutton")
  */
 class Dropbutton extends Links {
 

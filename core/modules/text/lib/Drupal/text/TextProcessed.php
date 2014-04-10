@@ -2,11 +2,12 @@
 
 /**
  * @file
- * Definition of Drupal\text\TextProcessed.
+ * Contains \Drupal\text\TextProcessed.
  */
 
 namespace Drupal\text;
 
+use Drupal\Component\Utility\String;
 use Drupal\Core\TypedData\DataDefinitionInterface;
 use Drupal\Core\TypedData\TypedDataInterface;
 use Drupal\Core\TypedData\TypedData;
@@ -52,13 +53,13 @@ class TextProcessed extends TypedData {
     if (!isset($text) || $text === '') {
       $this->processed = '';
     }
-    elseif ($item->getFieldDefinition()->getFieldSetting('text_processing')) {
+    elseif ($item->getFieldDefinition()->getSetting('text_processing')) {
       $this->processed = check_markup($text, $item->format, $item->getLangcode());
     }
     else {
       // Escape all HTML and retain newlines.
-      // @see \Drupal\text\Plugin\field\formatter\TextPlainFormatter
-      $this->processed = nl2br(check_plain($text));
+      // @see \Drupal\Core\Field\Plugin\Field\FieldFormatter\StringFormatter
+      $this->processed = nl2br(String::checkPlain($text));
     }
     return $this->processed;
   }

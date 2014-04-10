@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * @ingroup views_area_handlers
  *
- * @PluginID("http_status_code")
+ * @ViewsArea("http_status_code")
  */
 class HTTPStatusCode extends AreaPluginBase {
 
@@ -64,6 +64,7 @@ class HTTPStatusCode extends AreaPluginBase {
   function render($empty = FALSE) {
     if (!$empty || !empty($this->options['empty'])) {
       $this->view->getResponse()->setStatusCode($this->options['status_code']);
+      $this->view->getRequest()->attributes->set('_http_statuscode', $this->options['status_code']);
     }
   }
 

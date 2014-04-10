@@ -8,7 +8,6 @@
 namespace Drupal\node\Plugin\views\field;
 
 use Drupal\views\Plugin\views\field\FieldPluginBase;
-use Drupal\Component\Annotation\PluginID;
 use Drupal\views\ResultRow;
 
 /**
@@ -16,9 +15,16 @@ use Drupal\views\ResultRow;
  *
  * @ingroup views_field_handlers
  *
- * @PluginID("node_link")
+ * @ViewsField("node_link")
  */
 class Link extends FieldPluginBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function usesGroupBy() {
+    return FALSE;
+  }
 
   protected function defineOptions() {
     $options = parent::defineOptions();
@@ -70,7 +76,7 @@ class Link extends FieldPluginBase {
     if ($node->access('view')) {
       $this->options['alter']['make_link'] = TRUE;
       $this->options['alter']['path'] = 'node/' . $node->id();
-      $text = !empty($this->options['text']) ? $this->options['text'] : t('view');
+      $text = !empty($this->options['text']) ? $this->options['text'] : t('View');
       return $text;
     }
   }

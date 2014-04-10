@@ -19,13 +19,19 @@ use Drupal\options\Plugin\Field\FieldWidget\OptionsWidgetBase;
  *   field_types = {
  *     "list_boolean"
  *   },
- *   settings = {
- *     "display_label" = FALSE,
- *   },
  *   multiple_values = TRUE
  * )
  */
 class OnOffWidget extends OptionsWidgetBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function defaultSettings() {
+    return array(
+      'display_label' => FALSE,
+    ) + parent::defaultSettings();
+  }
 
   /**
    * {@inheritdoc}
@@ -68,7 +74,7 @@ class OnOffWidget extends OptionsWidgetBase {
 
     // Override the title from the incoming $element.
     if ($this->getSetting('display_label')) {
-      $element['#title'] = $this->fieldDefinition->getFieldLabel();
+      $element['#title'] = $this->fieldDefinition->getLabel();
     }
     else {
       $element['#title'] = isset($options[1]) ? $options[1] : '';

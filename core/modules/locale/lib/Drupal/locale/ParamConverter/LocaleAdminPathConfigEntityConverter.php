@@ -7,8 +7,11 @@
 
 namespace Drupal\locale\ParamConverter;
 
+use Drupal\Core\Routing\AdminContext;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Route;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\Core\ParamConverter\EntityConverter;
 use Drupal\Core\ParamConverter\ParamConverterInterface;
 
@@ -29,17 +32,48 @@ use Drupal\Core\ParamConverter\ParamConverterInterface;
 class LocaleAdminPathConfigEntityConverter extends EntityConverter {
 
   /**
+   * The config factory.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $configFactory;
+
+  /**
+   * The route admin context to determine whether a route is an admin one.
+   *
+   * @var \Drupal\Core\Routing\AdminContext
+   */
+  protected $adminContext;
+
+  /**
+   * Constructs a new EntityConverter.
+   *
+   * @param \Drupal\Core\Entity\EntityManagerInterface $entity_manager
+   *   The entity manager.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory.
+   * @param \Drupal\Core\Routing\AdminContext $admin_context
+   *   The route admin context service.
+   *
+   */
+  public function __construct(EntityManagerInterface $entity_manager, ConfigFactoryInterface $config_factory, AdminContext $admin_context) {
+    parent::__construct($entity_manager);
+
+    $this->configFactory = $config_factory;
+    $this->adminContext = $admin_context;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function convert($value, $definition, $name, array $defaults, Request $request) {
     $entity_type = substr($definition['type'], strlen('entity:'));
-    if ($storage = $this->entityManager->getStorageController($entity_type)) {
-      // Enter the override-free context, so we can ensure no overrides are
-      // applied.
-      config_context_enter('config.context.free');
+    if ($storage = $this->entityManager->getStorage($entity_type)) {
+      // Make sure no overrides are loaded.
+      $old_state = $this->configFactory->getOverrideState();
+      $this->configFactory->setOverrideState(FALSE);
       $entity = $storage->load($value);
-      // Leave the override-free context.
-      config_context_leave();
+      $this->configFactory->setOverrideState($old_state);
       return $entity;
     }
   }
@@ -51,12 +85,10 @@ class LocaleAdminPathConfigEntityConverter extends EntityConverter {
     if (parent::applies($definition, $name, $route)) {
       // As we only want to override EntityConverter for ConfigEntities, find
       // out whether the current entity is a ConfigEntity.
-      $entity_type = substr($definition['type'], strlen('entity:'));
-      $info = $this->entityManager->getDefinition($entity_type);
-      if (is_subclass_of($info['class'], '\Drupal\Core\Config\Entity\ConfigEntityInterface')) {
-        // path_is_admin() needs the path without the leading slash.
-        $path = ltrim($route->getPath(), '/');
-        return path_is_admin($path);
+      $entity_type_id = substr($definition['type'], strlen('entity:'));
+      $entity_type = $this->entityManager->getDefinition($entity_type_id);
+      if ($entity_type->isSubclassOf('\Drupal\Core\Config\Entity\ConfigEntityInterface')) {
+        return $this->adminContext->isAdminRoute($route);
       }
     }
     return FALSE;

@@ -8,14 +8,13 @@
 namespace Drupal\field\Plugin\views\filter;
 
 use Drupal\views\Plugin\views\filter\ManyToOne;
-use Drupal\Component\Annotation\PluginID;
 
 /**
  * Filter handler which uses list-fields as options.
  *
  * @ingroup views_filter_handlers
  *
- * @PluginID("field_list")
+ * @ViewsFilter("field_list")
  */
 class FieldList extends ManyToOne {
 

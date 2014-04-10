@@ -185,7 +185,7 @@ function hook_views_data() {
   //   - filter: A description of any filter handler for the table field.
   //   - argument: A description of any argument handler for the table field.
   //   - area: A description of any handler for adding content to header,
-  //     footer or as no result behaviour.
+  //     footer or as no result behavior.
   //
   // The handler descriptions are described with examples below.
 
@@ -295,12 +295,15 @@ function hook_views_data_alter(array &$data) {
     'title' => t('Example field'),
     'help' => t('Some example content that references a user'),
     'handler' => 'hook_handlers_field_example_field',
+    'field' => array(
+      'id' => 'example_field',
+    ),
   );
 
   // This example changes the handler of the node title field.
   // In this handler you could do stuff, like preview of the node when clicking
   // the node title.
-  $data['node']['title']['handler'] = 'modulename_handlers_field_node_title';
+  $data['node']['title']['field']['id'] = 'node_title';
 
   // This example adds a relationship to table {foo}, so that 'foo' views can
   // add this table using a relationship. Because we don't want to write over
@@ -338,8 +341,8 @@ function hook_views_query_substitutions(ViewExecutable $view) {
   return array(
     '***CURRENT_VERSION***' => \Drupal::VERSION,
     '***CURRENT_TIME***' => REQUEST_TIME,
-    '***CURRENT_LANGUAGE***' => language(\Drupal\Core\Language\Language::TYPE_CONTENT)->id,
-    '***DEFAULT_LANGUAGE***' => language_default()->id,
+    '***CURRENT_LANGUAGE***' => \Drupal::languageManager()->getCurrentLanguage(\Drupal\Core\Language\Language::TYPE_CONTENT)->id,
+    '***DEFAULT_LANGUAGE***' => \Drupal::languageManager()->getDefaultLanguage()->id,
   );
 }
 
@@ -573,9 +576,9 @@ function hook_views_query_alter(ViewExecutable $view, QueryPluginBase $query) {
  *
  * @param array $rows
  *   An associative array with two keys:
- *   - query: An array of rows suitable for '#theme' => 'table', containing
+ *   - query: An array of rows suitable for '#type' => 'table', containing
  *     information about the query and the display title and path.
- *   - statistics: An array of rows suitable for '#theme' => 'table',
+ *   - statistics: An array of rows suitable for '#type' => 'table',
  *     containing performance statistics.
  * @param \Drupal\views\ViewExecutable $view
  *   The view object.
@@ -624,7 +627,7 @@ function hook_views_ui_display_top_links_alter(array &$links, ViewExecutable $vi
  * @see views_invalidate_cache()
  */
 function hook_views_invalidate_cache() {
-  cache('mymodule')->invalidateTags(array('views' => TRUE));
+  \Drupal\Core\Cache\Cache::invalidateTags(array('views' => TRUE));
 }
 
 /**

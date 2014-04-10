@@ -36,20 +36,25 @@ class CommentBreadcrumbBuilder extends BreadcrumbBuilderBase {
   /**
    * {@inheritdoc}
    */
+  public function applies(array $attributes) {
+    return isset($attributes[RouteObjectInterface::ROUTE_NAME]) && $attributes[RouteObjectInterface::ROUTE_NAME] == 'comment.reply'
+    && isset($attributes['entity_type'])
+    && isset($attributes['entity_id'])
+    && isset($attributes['field_name']);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function build(array $attributes) {
-    if (isset($attributes[RouteObjectInterface::ROUTE_NAME]) && $attributes[RouteObjectInterface::ROUTE_NAME] == 'comment.reply'
-      && isset($attributes['entity_type'])
-      && isset($attributes['entity_id'])
-      && isset($attributes['field_name'])
-      ) {
-      $breadcrumb[] = $this->l($this->t('Home'), '<front>');
-      $entity = $this->entityManager
-        ->getStorageController($attributes['entity_type'])
-        ->load($attributes['entity_id']);
-      $uri = $entity->uri();
-      $breadcrumb[] = l($entity->label(), $uri['path'], $uri['options']);
-      return $breadcrumb;
-    }
+    $breadcrumb = array();
+
+    $breadcrumb[] = $this->l($this->t('Home'), '<front>');
+    $entity = $this->entityManager
+      ->getStorage($attributes['entity_type'])
+      ->load($attributes['entity_id']);
+    $breadcrumb[] = \Drupal::linkGenerator()->generateFromUrl($entity->label(), $entity->urlInfo());
+    return $breadcrumb;
   }
 
 }

@@ -87,6 +87,11 @@ class Drupal {
   const CORE_COMPATIBILITY = '8.x';
 
   /**
+   * Core minimum schema version.
+   */
+  const CORE_MINIMUM_SCHEMA_VERSION = 8000;
+
+  /**
    * The currently active container object.
    *
    * @var \Symfony\Component\DependencyInjection\ContainerInterface
@@ -97,17 +102,19 @@ class Drupal {
    * Sets a new global container.
    *
    * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
-   *   A new container instance to replace the current.
+   *   A new container instance to replace the current. NULL may be passed by
+   *   testing frameworks to ensure that the global state of a previous
+   *   environment does not leak into a test.
    */
-  public static function setContainer(ContainerInterface $container) {
+  public static function setContainer(ContainerInterface $container = NULL) {
     static::$container = $container;
   }
 
   /**
    * Returns the currently active global container.
    *
-   * @deprecated This method is only useful for the testing environment, and as
-   *   a BC shiv for drupal_container(). It should not be used otherwise.
+   * @deprecated This method is only useful for the testing environment. It
+   * should not be used otherwise.
    *
    * @return \Symfony\Component\DependencyInjection\ContainerInterface
    */
@@ -129,6 +136,29 @@ class Drupal {
    */
   public static function service($id) {
     return static::$container->get($id);
+  }
+
+  /**
+   * Indicates if a service is defined in the container.
+   *
+   * @param string $id
+   *   The ID of the service to check.
+   *
+   * @return bool
+   *   TRUE if the specified service exists, FALSE otherwise.
+   */
+  public static function hasService($id) {
+    return static::$container && static::$container->has($id);
+  }
+
+  /**
+   * Indicates if there is a currently active request object.
+   *
+   * @return bool
+   *   TRUE if there is a currently active request object, FALSE otherwise.
+   */
+  public static function hasRequest() {
+    return static::$container && static::$container->has('request') && static::$container->initialized('request') && static::$container->isScopeActive('request');
   }
 
   /**
@@ -160,7 +190,7 @@ class Drupal {
   /**
    * Gets the current active user.
    *
-   * @return \Drupal\Core\Session\AccountInterface
+   * @return \Drupal\Core\Session\AccountProxyInterface
    */
   public static function currentUser() {
     return static::$container->get('current_user');
@@ -191,12 +221,14 @@ class Drupal {
    *
    * @param string $bin
    *   (optional) The cache bin for which the cache object should be returned,
-   *   defaults to 'cache'.
+   *   defaults to 'default'.
    *
    * @return \Drupal\Core\Cache\CacheBackendInterface
    *   The cache object associated with the specified bin.
+   *
+   * @ingroup cache
    */
-  public static function cache($bin = 'cache') {
+  public static function cache($bin = 'default') {
     return static::$container->get('cache.' . $bin);
   }
 
@@ -217,6 +249,8 @@ class Drupal {
    * Returns the locking layer instance.
    *
    * @return \Drupal\Core\Lock\LockBackendInterface
+   *
+   * @ingroup lock
    */
   public static function lock() {
     return static::$container->get('lock');
@@ -239,6 +273,20 @@ class Drupal {
    */
   public static function config($name) {
     return static::$container->get('config.factory')->get($name);
+  }
+
+  /**
+   * Retrieves the configuration factory.
+   *
+   * This is mostly used to change the override settings on the configuration
+   * factory. For example, changing the language, or turning all overrides on
+   * or off.
+   *
+   * @return \Drupal\Core\Config\ConfigFactoryInterface
+   *   The configuration factory service.
+   */
+  public static function configFactory() {
+    return static::$container->get('config.factory');
   }
 
   /**
@@ -288,7 +336,7 @@ class Drupal {
    * needs to be the same across development, production, etc. environments
    * (for example, the system maintenance message) should use \Drupal::config() instead.
    *
-   * @return \Drupal\Core\KeyValueStore\KeyValueStoreInterface
+   * @return \Drupal\Core\KeyValueStore\StateInterface
    */
   public static function state() {
     return static::$container->get('state');
@@ -331,7 +379,7 @@ class Drupal {
    *   AND if all conditions in the query need to apply, OR if any of them is
    *   enough. Optional, defaults to AND.
    *
-   * @return \Drupal\Core\Entity\Query\QueryInterface
+   * @return \Drupal\Core\Entity\Query\QueryAggregateInterface
    *   The query object that can query the given entity type.
    */
   public static function entityQueryAggregate($entity_type, $conjunction = 'AND') {
@@ -366,8 +414,8 @@ class Drupal {
    *
    * @see \Drupal\Core\TypedData\TypedDataManager::create()
    */
-  public static function typedData() {
-    return static::$container->get('typed_data');
+  public static function typedDataManager() {
+    return static::$container->get('typed_data_manager');
   }
 
   /**
@@ -413,7 +461,7 @@ class Drupal {
    *     displayed outside the site, such as in an RSS feed.
    *   - 'language': An optional language object used to look up the alias
    *     for the URL. If $options['language'] is omitted, the language will be
-   *     obtained from language(Language::TYPE_URL).
+   *     obtained from \Drupal::languageManager()->getCurrentLanguage(Language::TYPE_URL).
    *   - 'https': Whether this URL should point to a secure location. If not
    *     defined, the current scheme is used, so the user stays on HTTP or HTTPS
    *     respectively. if mixed mode sessions are permitted, TRUE enforces HTTPS
@@ -520,7 +568,7 @@ class Drupal {
   /**
    * Returns the language manager service.
    *
-   * @return \Drupal\Core\Language\LanguageManager
+   * @return \Drupal\Core\Language\LanguageManagerInterface
    *   The language manager.
    */
   public static function languageManager() {
@@ -530,8 +578,15 @@ class Drupal {
   /**
    * Returns the CSRF token manager service.
    *
+   * The generated token is based on the session ID of the current user. Normally,
+   * anonymous users do not have a session, so the generated token will be
+   * different on every page request. To generate a token for users without a
+   * session, manually start a session prior to calling this function.
+   *
    * @return \Drupal\Core\Access\CsrfTokenGenerator
    *   The CSRF token manager.
+   *
+   * @see drupal_session_start()
    */
   public static function csrfToken() {
     return static::$container->get('csrf_token');
@@ -555,6 +610,16 @@ class Drupal {
    */
   public static function formBuilder() {
     return static::$container->get('form_builder');
+  }
+
+  /**
+   * Gets the syncing state.
+   *
+   * @return bool
+   *   Returns TRUE is syncing flag set.
+   */
+  public function isConfigSyncing() {
+    return static::$container->get('config.installer')->isSyncing();
   }
 
 }

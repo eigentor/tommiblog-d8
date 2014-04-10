@@ -2,32 +2,32 @@
 
 /**
  * @file
- * Definition of Drupal\entity_test\Entity\EntityTest.
+ * Contains \Drupal\entity_test\Entity\EntityTest.
  */
 
 namespace Drupal\entity_test\Entity;
 
 use Drupal\Core\Entity\ContentEntityBase;
-use Drupal\Core\Entity\Annotation\EntityType;
-use Drupal\Core\Annotation\Translation;
+use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\FieldDefinition;
-use Drupal\Core\Language\Language;
+use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\user\EntityOwnerInterface;
+use Drupal\user\UserInterface;
 
 /**
  * Defines the test entity class.
  *
- * @EntityType(
+ * @ContentEntityType(
  *   id = "entity_test",
  *   label = @Translation("Test entity"),
  *   controllers = {
- *     "storage" = "Drupal\entity_test\EntityTestStorageController",
- *     "list" = "Drupal\entity_test\EntityTestListController",
+ *     "list_builder" = "Drupal\entity_test\EntityTestListBuilder",
  *     "view_builder" = "Drupal\entity_test\EntityTestViewBuilder",
  *     "access" = "Drupal\entity_test\EntityTestAccessController",
  *     "form" = {
  *       "default" = "Drupal\entity_test\EntityTestFormController"
  *     },
- *     "translation" = "Drupal\content_translation\ContentTranslationController"
+ *     "translation" = "Drupal\content_translation\ContentTranslationHandler"
  *   },
  *   base_table = "entity_test",
  *   fieldable = TRUE,
@@ -45,80 +45,27 @@ use Drupal\Core\Language\Language;
  *   }
  * )
  */
-class EntityTest extends ContentEntityBase {
+class EntityTest extends ContentEntityBase implements EntityOwnerInterface {
 
   /**
-   * The entity ID.
-   *
-   * @var \Drupal\Core\Field\FieldItemListInterface
+   * {@inheritdoc}
    */
-  public $id;
-
-  /**
-   * The entity UUID.
-   *
-   * @var \Drupal\Core\Field\FieldItemListInterface
-   */
-  public $uuid;
-
-  /**
-   * The bundle of the test entity.
-   *
-   * @var \Drupal\Core\Field\FieldItemListInterface
-   */
-  public $type;
-
-  /**
-   * The name of the test entity.
-   *
-   * @var \Drupal\Core\Field\FieldItemListInterface
-   */
-  public $name;
-
-  /**
-   * The associated user.
-   *
-   * @var \Drupal\Core\Field\FieldItemListInterface
-   */
-  public $user_id;
-
-  /**
-   * Initialize the object. Invoked upon construction and wake up.
-   */
-  protected function init() {
-    parent::init();
-    // We unset all defined properties, so magic getters apply.
-    unset($this->id);
-    unset($this->uuid);
-    unset($this->name);
-    unset($this->user_id);
-    unset($this->type);
-  }
-
-  /**
-   * Overrides Drupal\entity\Entity::label().
-   */
-  public function label($langcode = NULL) {
-    $info = $this->entityInfo();
-    if (!isset($langcode)) {
-      $langcode = $this->activeLangcode;
-    }
-    if (isset($info['entity_keys']['label']) && $info['entity_keys']['label'] == 'name') {
-      return $this->getTranslation($langcode)->name->value;
-    }
-    else {
-      return parent::label($langcode);
+  public static function preCreate(EntityStorageInterface $storage, array &$values) {
+    parent::preCreate($storage, $values);
+    if (empty($values['type'])) {
+      $values['type'] = $storage->getEntityTypeId();
     }
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function baseFieldDefinitions($entity_type) {
+  public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields['id'] = FieldDefinition::create('integer')
       ->setLabel(t('ID'))
       ->setDescription(t('The ID of the test entity.'))
-      ->setReadOnly(TRUE);
+      ->setReadOnly(TRUE)
+      ->setSetting('unsigned', TRUE);
 
     $fields['uuid'] = FieldDefinition::create('uuid')
       ->setLabel(t('UUID'))
@@ -133,7 +80,7 @@ class EntityTest extends ContentEntityBase {
       ->setLabel(t('Name'))
       ->setDescription(t('The name of the test entity.'))
       ->setTranslatable(TRUE)
-      ->setPropertyConstraints('value', array('Length' => array('max' => 32)));
+      ->setSetting('max_length', 32);
 
     // @todo: Add allowed values validation.
     $fields['type'] = FieldDefinition::create('string')
@@ -144,10 +91,62 @@ class EntityTest extends ContentEntityBase {
     $fields['user_id'] = FieldDefinition::create('entity_reference')
       ->setLabel(t('User ID'))
       ->setDescription(t('The ID of the associated user.'))
-      ->setFieldSettings(array('target_type' => 'user'))
+      ->setSettings(array('target_type' => 'user'))
       ->setTranslatable(TRUE);
 
     return $fields;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getOwner() {
+    return $this->get('user_id')->entity;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getOwnerId() {
+    return $this->get('user_id')->target_id;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setOwnerId($uid) {
+    $this->set('user_id', $uid);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setOwner(UserInterface $account) {
+    $this->set('user_id', $account->id());
+    return $this;
+  }
+
+  /**
+   * Sets the name.
+   *
+   * @param string $name
+   *   Name of the entity.
+   *
+   * @return $this
+   */
+  public function setName($name) {
+    $this->set('name', $name);
+    return $this;
+  }
+
+  /**
+   * Returns the name.
+   *
+   * @return string
+   */
+  public function getName() {
+    return $this->get('name')->value;
   }
 
 }

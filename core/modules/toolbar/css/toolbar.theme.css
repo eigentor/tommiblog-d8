@@ -14,12 +14,13 @@
   -webkit-touch-callout: none;
   touch-callout: none;
 }
-.toolbar a {
+.toolbar .toolbar-item {
   cursor: pointer;
   padding: 1em 1.3333em;
+  line-height: 1em;
   text-decoration: none;
 }
-.toolbar a:hover {
+.toolbar .toolbar-item:hover {
   text-decoration: underline;
 }
 
@@ -34,18 +35,18 @@
 [dir="rtl"] .toolbar .toolbar-bar {
   box-shadow: 1px 0 3px 1px rgba(0, 0, 0, 0.3333);
 }
-.toolbar .toolbar-bar a {
+.toolbar .toolbar-bar .toolbar-item {
   color: #ffffff;
 }
-.toolbar .toolbar-bar .toolbar-tab > a {
+.toolbar .toolbar-bar .toolbar-tab > .toolbar-item {
   font-weight: bold;
 }
-.toolbar .toolbar-bar .toolbar-tab > a:hover {
+.toolbar .toolbar-bar .toolbar-tab > .toolbar-item:hover {
   background-image: -webkit-linear-gradient(rgba(255, 255, 255, 0.125) 20%, transparent 200%);
   background-image: linear-gradient(rgba(255, 255, 255, 0.125) 20%, transparent 200%);
   text-decoration: none;
 }
-.toolbar .toolbar-bar .toolbar-tab > a.active {
+.toolbar .toolbar-bar .toolbar-tab > .toolbar-item.active {
   background-image: -webkit-linear-gradient(rgba(255, 255, 255, 0.25) 20%, transparent 200%);
   background-image: linear-gradient(rgba(255, 255, 255, 0.25) 20%, transparent 200%);
 }
@@ -63,12 +64,12 @@
   padding-right: 0;
   padding-left: 5em;
 }
-.toolbar .toolbar-tray-vertical > .toolbar-lining:before {
-  background-color: #ffffff;
+.toolbar .toolbar-tray-vertical {
+  background-color: #f5f5f5;
   border-right: 1px solid #aaaaaa; /* LTR */
   box-shadow: -1px 0 5px 2px rgba(0, 0, 0, 0.3333); /* LTR */
 }
-[dir="rtl"] .toolbar .toolbar-tray-vertical > .toolbar-lining:before {
+[dir="rtl"] .toolbar .toolbar-tray-vertical {
   border-left: 1px solid #aaaaaa;
   border-right: 0 none;
   box-shadow: 1px 0 5px 2px rgba(0, 0, 0, 0.3333);
@@ -83,15 +84,19 @@
 .toolbar .toolbar-tray-horizontal .toolbar-tray {
   background-color: #f5f5f5;
 }
-.toolbar .toolbar-tray a {
+.toolbar-tray a {
   color: #565656;
+  cursor: pointer;
+  padding: 1em 1.3333em;
+  text-decoration: none;
 }
-.toolbar .toolbar-tray a:hover,
-.toolbar .toolbar-tray a:active,
-.toolbar .toolbar-tray a.active {
+.toolbar-tray a:hover,
+.toolbar-tray a:active,
+.toolbar-tray a.active {
   color: #000;
+  text-decoration: underline;
 }
-.toolbar .toolbar-tray-horizontal .menu {
+.toolbar .menu {
   background-color: #ffffff;
 }
 .toolbar .toolbar-tray-horizontal .menu li + li {

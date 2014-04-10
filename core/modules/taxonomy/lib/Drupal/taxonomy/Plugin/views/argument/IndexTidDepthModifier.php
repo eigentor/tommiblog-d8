@@ -8,7 +8,6 @@
 namespace Drupal\taxonomy\Plugin\views\argument;
 
 use Drupal\views\Plugin\views\argument\ArgumentPluginBase;
-use Drupal\Component\Annotation\PluginID;
 
 /**
  * Argument handler for to modify depth for a previous term.
@@ -18,7 +17,7 @@ use Drupal\Component\Annotation\PluginID;
  *
  * @ingroup views_argument_handlers
  *
- * @PluginID("taxonomy_index_tid_depth_modifier")
+ * @ViewsArgument("taxonomy_index_tid_depth_modifier")
  */
 class IndexTidDepthModifier extends ArgumentPluginBase {
 

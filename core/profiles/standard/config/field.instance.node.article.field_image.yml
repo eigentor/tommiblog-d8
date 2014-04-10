@@ -1,9 +1,7 @@
 id: node.article.field_image
-uuid: 9601b8f1-65a9-46a6-a500-d072d1232449
-field_name: field_image
-field_uuid: 748beaea-5074-4ff2-b51c-28a643d37c3a
 entity_type: node
 bundle: article
+field_name: field_image
 label: Image
 description: ''
 required: false
@@ -16,14 +14,19 @@ settings:
   max_resolution: ''
   min_resolution: ''
   alt_field: true
-  title_field: ''
-  alt_field_required: 0
-  title_field_required: 0
+  title_field: false
+  alt_field_required: false
+  title_field_required: false
   default_image:
     fid: null
     alt: ''
     title: ''
     width: null
     height: null
-status: 1
+status: true
 langcode: und
+field_type: image
+dependencies:
+  entity:
+    - field.field.node.field_image
+    - node.type.article

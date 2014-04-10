@@ -8,9 +8,8 @@
 namespace Drupal\file\Entity;
 
 use Drupal\Core\Entity\ContentEntityBase;
-use Drupal\Core\Entity\Annotation\EntityType;
-use Drupal\Core\Entity\EntityStorageControllerInterface;
-use Drupal\Core\Annotation\Translation;
+use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\FieldDefinition;
 use Drupal\Core\Language\Language;
 use Drupal\file\FileInterface;
@@ -19,11 +18,11 @@ use Drupal\user\UserInterface;
 /**
  * Defines the file entity class.
  *
- * @EntityType(
+ * @ContentEntityType(
  *   id = "file",
  *   label = @Translation("File"),
  *   controllers = {
- *     "storage" = "Drupal\file\FileStorageController",
+ *     "storage" = "Drupal\file\FileStorage",
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder"
  *   },
  *   base_table = "file_managed",
@@ -113,8 +112,15 @@ class File extends ContentEntityBase implements FileInterface {
   /**
    * {@inheritdoc}
    */
+  public function getCreatedTime() {
+    return $this->get('created')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getChangedTime() {
-    return $this->get('timestamp')->value;
+    return $this->get('changed')->value;
   }
 
   /**
@@ -127,8 +133,24 @@ class File extends ContentEntityBase implements FileInterface {
   /**
    * {@inheritdoc}
    */
-  public function setOwner(UserInterface $user) {
-    return $this->get('uid')->entity = $user;
+  public function getOwnerId() {
+    return $this->get('uid')->target_id;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setOwnerId($uid) {
+    $this->set('uid', $uid);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setOwner(UserInterface $account) {
+    $this->set('uid', $account->id());
+    return $this;
   }
 
   /**
@@ -162,7 +184,7 @@ class File extends ContentEntityBase implements FileInterface {
   /**
    * {@inheritdoc}
    */
-  public static function preCreate(EntityStorageControllerInterface $storage_controller, array &$values) {
+  public static function preCreate(EntityStorageInterface $storage, array &$values) {
     // Automatically detect filename if not set.
     if (!isset($values['filename']) && isset($values['uri'])) {
       $values['filename'] = drupal_basename($values['uri']);
@@ -177,25 +199,17 @@ class File extends ContentEntityBase implements FileInterface {
   /**
    * {@inheritdoc}
    */
-  public function preSave(EntityStorageControllerInterface $storage_controller) {
-    parent::preSave($storage_controller);
+  public function preSave(EntityStorageInterface $storage) {
+    parent::preSave($storage);
 
-    $this->timestamp = REQUEST_TIME;
     $this->setSize(filesize($this->getFileUri()));
-    if (!isset($this->langcode->value)) {
-      // Default the file's language code to none, because files are language
-      // neutral more often than language dependent. Until we have better
-      // flexible settings.
-      // @todo See http://drupal.org/node/258785 and followups.
-      $this->langcode = Language::LANGCODE_NOT_SPECIFIED;
-    }
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function preDelete(EntityStorageControllerInterface $storage_controller, array $entities) {
-    parent::preDelete($storage_controller, $entities);
+  public static function preDelete(EntityStorageInterface $storage, array $entities) {
+    parent::preDelete($storage, $entities);
 
     foreach ($entities as $entity) {
       // Delete all remaining references to this file.
@@ -215,11 +229,12 @@ class File extends ContentEntityBase implements FileInterface {
   /**
    * {@inheritdoc}
    */
-  public static function baseFieldDefinitions($entity_type) {
+  public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields['fid'] = FieldDefinition::create('integer')
       ->setLabel(t('File ID'))
       ->setDescription(t('The file ID.'))
-      ->setReadOnly(TRUE);
+      ->setReadOnly(TRUE)
+      ->setSetting('unsigned', TRUE);
 
     $fields['uuid'] = FieldDefinition::create('uuid')
       ->setLabel(t('UUID'))
@@ -233,7 +248,7 @@ class File extends ContentEntityBase implements FileInterface {
     $fields['uid'] = FieldDefinition::create('entity_reference')
       ->setLabel(t('User ID'))
       ->setDescription(t('The user ID of the file.'))
-      ->setFieldSetting('target_type', 'user');
+      ->setSetting('target_type', 'user');
 
     $fields['filename'] = FieldDefinition::create('string')
       ->setLabel(t('Filename'))
@@ -247,18 +262,22 @@ class File extends ContentEntityBase implements FileInterface {
       ->setLabel(t('File MIME type'))
       ->setDescription(t("The file's MIME type."));
 
-    // @todo Convert to an integer field in https://drupal.org/node/2149877.
-    $fields['filesize'] = FieldDefinition::create('boolean')
+    $fields['filesize'] = FieldDefinition::create('integer')
       ->setLabel(t('File size'))
-      ->setDescription(t('The size of the file in bytes.'));
+      ->setDescription(t('The size of the file in bytes.'))
+      ->setSetting('unsigned', TRUE);
 
     $fields['status'] = FieldDefinition::create('integer')
       ->setLabel(t('Status'))
       ->setDescription(t('The status of the file, temporary (0) and permanent (1).'));
 
-    $fields['timestamp'] = FieldDefinition::create('integer')
+    $fields['created'] = FieldDefinition::create('created')
       ->setLabel(t('Created'))
-      ->setDescription(t('The time that the node was created.'));
+      ->setDescription(t('The timestamp that the file was created.'));
+
+    $fields['changed'] = FieldDefinition::create('changed')
+      ->setLabel(t('Changed'))
+      ->setDescription(t('The timestamp that the file was last changed.'));
 
     return $fields;
   }

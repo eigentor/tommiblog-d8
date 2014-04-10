@@ -7,13 +7,12 @@
 
 namespace Drupal\taxonomy\Plugin\views\field;
 
-use Drupal\Component\Annotation\PluginID;
 use Drupal\views\ResultRow;
 
 /**
  * Field handler to show the language of a taxonomy term.
  *
- * @PluginID("taxonomy_term_language")
+ * @ViewsField("taxonomy_term_language")
  */
 class Language extends Taxonomy {
 

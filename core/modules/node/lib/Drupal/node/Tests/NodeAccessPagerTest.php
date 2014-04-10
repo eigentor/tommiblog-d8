@@ -8,6 +8,7 @@
 namespace Drupal\node\Tests;
 
 use Drupal\Core\Language\Language;
+use Drupal\comment\CommentInterface;
 use Drupal\simpletest\WebTestBase;
 
 /**
@@ -34,6 +35,7 @@ class NodeAccessPagerTest extends WebTestBase {
     parent::setUp();
 
     node_access_rebuild();
+    $this->drupalCreateContentType(array('type' => 'page', 'name' => t('Basic page')));
     $this->container->get('comment.manager')->addDefaultField('node', 'page');
     $this->web_user = $this->drupalCreateUser(array('access content', 'access comments', 'node test view'));
   }
@@ -55,7 +57,7 @@ class NodeAccessPagerTest extends WebTestBase {
         'comment_body' => array(
           array('value' => $this->randomName()),
         ),
-        'status' => COMMENT_PUBLISHED,
+        'status' => CommentInterface::PUBLISHED,
       ));
       $comment->save();
     }

@@ -7,7 +7,6 @@
 
 namespace Drupal\user\Plugin\views\field;
 
-use Drupal\Component\Annotation\PluginID;
 use Drupal\views\ResultRow;
 
 /**
@@ -15,7 +14,7 @@ use Drupal\views\ResultRow;
  *
  * @ingroup views_field_handlers
  *
- * @PluginID("user_language")
+ * @ViewsField("user_language")
  */
 class Language extends User {
 
@@ -25,7 +24,7 @@ class Language extends User {
   protected function renderLink($data, ResultRow $values) {
     if (!empty($this->options['link_to_user'])) {
       $uid = $this->getValue($values, 'uid');
-      if (user_access('access user profiles') && $uid) {
+      if ($this->view->getUser()->hasPermission('access user profiles') && $uid) {
         $this->options['alter']['make_link'] = TRUE;
         $this->options['alter']['path'] = 'user/' . $uid;
       }

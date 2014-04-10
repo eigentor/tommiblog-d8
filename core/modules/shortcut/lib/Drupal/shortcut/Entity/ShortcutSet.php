@@ -8,21 +8,19 @@
 namespace Drupal\shortcut\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
-use Drupal\Core\Entity\Annotation\EntityType;
-use Drupal\Core\Annotation\Translation;
-use Drupal\Core\Entity\EntityStorageControllerInterface;
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\shortcut\ShortcutSetInterface;
 
 /**
- * Defines the Shortcut configuration entity.
+ * Defines the Shortcut set configuration entity.
  *
- * @EntityType(
+ * @ConfigEntityType(
  *   id = "shortcut_set",
  *   label = @Translation("Shortcut set"),
  *   controllers = {
- *     "storage" = "Drupal\shortcut\ShortcutSetStorageController",
+ *     "storage" = "Drupal\shortcut\ShortcutSetStorage",
  *     "access" = "Drupal\shortcut\ShortcutSetAccessController",
- *     "list" = "Drupal\shortcut\ShortcutSetListController",
+ *     "list_builder" = "Drupal\shortcut\ShortcutSetListBuilder",
  *     "form" = {
  *       "default" = "Drupal\shortcut\ShortcutSetFormController",
  *       "add" = "Drupal\shortcut\ShortcutSetFormController",
@@ -31,14 +29,15 @@ use Drupal\shortcut\ShortcutSetInterface;
  *       "delete" = "Drupal\shortcut\Form\ShortcutSetDeleteForm"
  *     }
  *   },
- *   config_prefix = "shortcut.set",
+ *   config_prefix = "set",
  *   entity_keys = {
  *     "id" = "id",
- *     "label" = "label",
- *     "uuid" = "uuid"
+ *     "label" = "label"
  *   },
  *   links = {
- *     "edit-form" = "shortcut.set_customize"
+ *     "customize-form" = "shortcut.set_customize",
+ *     "delete-form" = "shortcut.set_delete",
+ *     "edit-form" = "shortcut.set_edit"
  *   }
  * )
  */
@@ -52,13 +51,6 @@ class ShortcutSet extends ConfigEntityBase implements ShortcutSetInterface {
   public $id;
 
   /**
-   * The UUID for the configuration entity.
-   *
-   * @var string
-   */
-  public $uuid;
-
-  /**
    * The human-readable name of the configuration entity.
    *
    * @var string
@@ -66,34 +58,20 @@ class ShortcutSet extends ConfigEntityBase implements ShortcutSetInterface {
   public $label;
 
   /**
-   * An array of menu links.
-   *
-   * @var array
-   */
-  public $links = array();
-
-  /**
    * {@inheritdoc}
    */
-  public function postCreate(EntityStorageControllerInterface $storage_controller) {
-    parent::postCreate($storage_controller);
+  public function postCreate(EntityStorageInterface $storage) {
+    parent::postCreate($storage);
 
     // Generate menu-compatible set name.
     if (!$this->getOriginalId()) {
       // Save a new shortcut set with links copied from the user's default set.
       $default_set = shortcut_default_set();
-      // Generate a name to have no collisions with menu.
-      // Size of menu_name is 32 so id could be 23 = 32 - strlen('shortcut-').
-      $id = substr($this->id(), 0, 23);
-      $this->set('id', $id);
-      if ($default_set->id() != $id) {
-        foreach ($default_set->links as $link) {
-          $link = $link->createDuplicate();
-          $link->enforceIsNew();
-          $link->menu_name = $id;
-          $link->save();
-          $this->links[$link->uuid()] = $link;
-        }
+      foreach ($default_set->getShortcuts() as $shortcut) {
+        $shortcut = $shortcut->createDuplicate();
+        $shortcut->enforceIsNew();
+        $shortcut->shortcut_set->target_id = $this->id();
+        $shortcut->save();
       }
     }
   }
@@ -101,44 +79,41 @@ class ShortcutSet extends ConfigEntityBase implements ShortcutSetInterface {
   /**
    * {@inheritdoc}
    */
-  public function preSave(EntityStorageControllerInterface $storage_controller) {
-    parent::preSave($storage_controller);
-
-    // Just store the UUIDs.
-    foreach ($this->links as $uuid => $link) {
-      $this->links[$uuid] = $uuid;
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function postSave(EntityStorageControllerInterface $storage_controller, $update = TRUE) {
-    parent::postSave($storage_controller, $update);
-
-    foreach ($this->links as $uuid) {
-      if ($menu_link = entity_load_by_uuid('menu_link', $uuid)) {
-        // Do not specifically associate these links with the shortcut module,
-        // since other modules may make them editable via the menu system.
-        // However, we do need to specify the correct menu name.
-        $menu_link->menu_name = 'shortcut-' . $this->id();
-        $menu_link->plid = 0;
-        $menu_link->save();
-      }
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function preDelete(EntityStorageControllerInterface $storage_controller, array $entities) {
-    parent::preDelete($storage_controller, $entities);
+  public static function preDelete(EntityStorageInterface $storage, array $entities) {
+    parent::preDelete($storage, $entities);
 
     foreach ($entities as $entity) {
-      $storage_controller->deleteAssignedShortcutSets($entity);
-      // Next, delete the menu links for this set.
-      menu_delete_links('shortcut-' . $entity->id());
+      $storage->deleteAssignedShortcutSets($entity);
+
+      // Next, delete the shortcuts for this set.
+      $shortcut_ids = \Drupal::entityQuery('shortcut')
+        ->condition('shortcut_set', $entity->id(), '=')
+        ->execute();
+
+      $controller = \Drupal::entityManager()->getStorage('shortcut');
+      $entities = $controller->loadMultiple($shortcut_ids);
+      $controller->delete($entities);
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function resetLinkWeights() {
+    $weight = -50;
+    foreach ($this->getShortcuts() as $shortcut) {
+      $shortcut->setWeight(++$weight);
+      $shortcut->save();
+    }
+
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getShortcuts() {
+    return \Drupal::entityManager()->getStorage('shortcut')->loadByProperties(array('shortcut_set' => $this->id()));
   }
 
 }

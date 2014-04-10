@@ -7,6 +7,7 @@
 namespace Drupal\migrate\Tests\process;
 
 use Drupal\migrate\Plugin\migrate\process\TestGet;
+use Drupal\migrate\Row;
 
 /**
  * @group migrate
@@ -25,12 +26,18 @@ class GetTest extends MigrateProcessTestCase {
     );
   }
 
-  function setUp() {
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp() {
     $this->plugin = new TestGet();
     parent::setUp();
   }
 
-  function testTransformSourceString() {
+  /**
+   * Tests the Get plugin when source is a string.
+   */
+  public function testTransformSourceString() {
     $this->row->expects($this->once())
       ->method('getSourceProperty')
       ->with('test')
@@ -40,7 +47,10 @@ class GetTest extends MigrateProcessTestCase {
     $this->assertSame($value, 'source_value');
   }
 
-  function testTransformSourceArray() {
+  /**
+   * Tests the Get plugin when source is an array.
+   */
+  public function testTransformSourceArray() {
     $map = array(
       'test1' => 'source_value1',
       'test2' => 'source_value2',
@@ -53,7 +63,10 @@ class GetTest extends MigrateProcessTestCase {
     $this->assertSame($value, array('source_value1', 'source_value2'));
   }
 
-  function testTransformSourceStringAt() {
+  /**
+   * Tests the Get plugin when source is a string pointing to destination.
+   */
+  public function testTransformSourceStringAt() {
     $this->row->expects($this->once())
       ->method('getSourceProperty')
       ->with('@test')
@@ -63,7 +76,10 @@ class GetTest extends MigrateProcessTestCase {
     $this->assertSame($value, 'source_value');
   }
 
-  function testTransformSourceArrayAt() {
+  /**
+   * Tests the Get plugin when source is an array pointing to destination.
+   */
+  public function testTransformSourceArrayAt() {
     $map = array(
       'test1' => 'source_value1',
       '@test2' => 'source_value2',
@@ -82,9 +98,9 @@ class GetTest extends MigrateProcessTestCase {
 namespace Drupal\migrate\Plugin\migrate\process;
 
 class TestGet extends Get {
-  function __construct() {
+  public function __construct() {
   }
-  function setSource($source) {
+  public function setSource($source) {
     $this->configuration['source'] = $source;
   }
 }

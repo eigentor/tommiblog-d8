@@ -9,7 +9,6 @@ namespace Drupal\comment\Plugin\views\field;
 
 use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\views\Plugin\views\field\FieldPluginBase;
-use Drupal\Component\Annotation\PluginID;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\views\ResultRow;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -19,7 +18,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @ingroup views_field_handlers
  *
- * @PluginID("comment_link")
+ * @ViewsField("comment_link")
  */
 class Link extends FieldPluginBase {
 
@@ -33,7 +32,7 @@ class Link extends FieldPluginBase {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, array $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
       $configuration,
       $plugin_id,
@@ -49,12 +48,12 @@ class Link extends FieldPluginBase {
    *   A configuration array containing information about the plugin instance.
    * @param string $plugin_id
    *   The plugin_id for the plugin instance.
-   * @param array $plugin_definition
+   * @param mixed $plugin_definition
    *   The plugin implementation definition.
    * @param \Drupal\Core\Entity\EntityManagerInterface $entity_manager
    *   The entity manager service.
    */
-  public function __construct(array $configuration, $plugin_id, array $plugin_definition, EntityManagerInterface $entity_manager) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityManagerInterface $entity_manager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->entityManager = $entity_manager;
   }
@@ -102,7 +101,8 @@ class Link extends FieldPluginBase {
    *   Returns a string for the link text.
    */
   protected function renderLink($data, ResultRow $values) {
-    $text = !empty($this->options['text']) ? $this->options['text'] : t('view');
+    $text = !empty($this->options['text']) ? $this->options['text'] : t('View');
+    /** @var \Drupal\comment\CommentInterface $comment */
     $comment = $data;
     $cid = $comment->id();
 
@@ -115,11 +115,8 @@ class Link extends FieldPluginBase {
     }
     // If there is no comment link to the node.
     elseif ($this->options['link_to_node']) {
-      $entity_id = $comment->entity_id;
-      $entity_type = $comment->entity_type;
-      $entity = $this->entityManager->getStorageController($entity_type)->load($entity_id);
-      $uri = $entity->uri();
-      $this->options['alter']['path'] = $uri['path'];
+      $entity = $comment->getCommentedEntity();
+      $this->options['alter']['path'] = $entity->getSystemPath();
     }
 
     return $text;

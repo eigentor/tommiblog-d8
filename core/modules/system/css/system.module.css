@@ -11,18 +11,27 @@
 
 /* Animated throbber */
 .js input.form-autocomplete {
-  background-image: url(../../../misc/throbber.gif);
-  background-position: 100% 2px; /* LTR */
+  background-image: url(../../../misc/throbber-inactive.png);
+  background-position: 100% center; /* LTR */
   background-repeat: no-repeat;
 }
 .js[dir="rtl"] input.form-autocomplete {
-  background-position: 0% 2px;
+  background-position: 0% center;
 }
 .js input.form-autocomplete.ui-autocomplete-loading {
-  background-position: 100% -18px; /* LTR */
+  background-image: url(../../../misc/throbber-active.gif);
+  background-position: 100% center; /* LTR */
 }
 .js[dir="rtl"] input.form-autocomplete.ui-autocomplete-loading {
-  background-position: 0% -18px;
+  background-position: 0% center;
+}
+
+/**
+ * Unboxed fieldsets for grouping form elements.
+ */
+.fieldgroup {
+  border-width: 0;
+  padding: 0;
 }
 
 /**
@@ -70,6 +79,18 @@
 body.drag {
   cursor: move;
 }
+tr.region-title {
+  font-weight: bold;
+}
+tr.region-message {
+  color: #999;
+}
+tr.region-populated {
+  display: none;
+}
+tr.add-new .tabledrag-changed {
+  display: none;
+}
 .draggable a.tabledrag-handle {
   cursor: move;
   float: left; /* LTR */
@@ -96,6 +117,14 @@ a.tabledrag-handle .handle {
 .no-svg a.tabledrag-handle .handle {
   background-image: url(../../../misc/icons/787878/move.png);
 }
+a.tabledrag-handle:hover .handle,
+a.tabledrag-handle:focus .handle {
+  background-image: url(../../../misc/icons/000000/move.svg);
+}
+.no-svg a.tabledrag-handle:hover .handle,
+.no-svg a.tabledrag-handle:focus .handle {
+  background-image: url(../../../misc/icons/000000/move.png);
+}
 .touch .draggable td {
   padding: 0 10px;
 }
@@ -113,10 +142,6 @@ a.tabledrag-handle .handle {
 }
 .touch .draggable.drag a.tabledrag-handle .handle {
   background-position: 50% -32px;
-}
-.no-touch a.tabledrag-handle:hover .handle,
-.no-touch a.tabledrag-handle:focus .handle {
-  background-position: 6px -11px;
 }
 div.indentation {
   float: left; /* LTR */
@@ -219,7 +244,7 @@ table.sticky-header {
   float: right;
 }
 .ajax-progress-throbber .throbber {
-  background: transparent url(../../../misc/throbber.gif) no-repeat 0px -18px;
+  background: transparent url(../../../misc/throbber-active.gif) no-repeat 0px center;
   display: inline;
   padding: 1px 5px 2px;
 }
@@ -335,17 +360,53 @@ tr .ajax-progress-throbber .throbber {
 }
 
 /**
- * Content display classes.
+ * Text alignment classes.
  */
-.align-left {
+.text-align-left {
   text-align: left;
 }
-.align-right {
+.text-align-right {
   text-align: right;
 }
-.align-center {
+.text-align-center {
   text-align: center;
 }
-.align-justify {
+.text-align-justify {
   text-align: justify;
+}
+
+/**
+ * Alignment classes (images, videos, blockquotes …).
+ */
+.align-left {
+  float: left;
+}
+.align-right {
+  float: right;
+}
+.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/*
+ * Remove browser styles, especially for <buttons> and so on.
+ */
+.reset-appearance {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border: 0 none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  line-height: inherit;
+}
+
+/*
+ * Contain positioned elements.
+ */
+.position-container {
+  position: relative;
 }

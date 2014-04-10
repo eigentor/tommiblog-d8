@@ -7,8 +7,6 @@
 
 namespace Drupal\views\Plugin\views\filter;
 
-use Drupal\Component\Annotation\PluginID;
-
 /**
  * Simple filter to handle matching of boolean values.
  *
@@ -20,7 +18,7 @@ use Drupal\Component\Annotation\PluginID;
  *
  * @ingroup views_filter_handlers
  *
- * @PluginID("boolean_string")
+ * @ViewsFilter("boolean_string")
  */
 class BooleanOperatorString extends BooleanOperator {
 

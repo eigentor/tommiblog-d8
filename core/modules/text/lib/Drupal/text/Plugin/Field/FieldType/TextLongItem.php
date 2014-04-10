@@ -7,7 +7,7 @@
 
 namespace Drupal\text\Plugin\Field\FieldType;
 
-use Drupal\field\FieldInterface;
+use Drupal\Core\Field\FieldDefinitionInterface;
 
 /**
  * Plugin implementation of the 'text_long' field type.
@@ -16,9 +16,6 @@ use Drupal\field\FieldInterface;
  *   id = "text_long",
  *   label = @Translation("Long text"),
  *   description = @Translation("This field stores long text in the database."),
- *   instance_settings = {
- *     "text_processing" = "0"
- *   },
  *   default_widget = "text_textarea",
  *   default_formatter = "text_default"
  * )
@@ -28,7 +25,7 @@ class TextLongItem extends TextItemBase {
   /**
    * {@inheritdoc}
    */
-  public static function schema(FieldInterface $field) {
+  public static function schema(FieldDefinitionInterface $field_definition) {
     return array(
       'columns' => array(
         'value' => array(
@@ -57,7 +54,7 @@ class TextLongItem extends TextItemBase {
     $element['text_processing'] = array(
       '#type' => 'radios',
       '#title' => t('Text processing'),
-      '#default_value' => $this->getFieldSetting('text_processing'),
+      '#default_value' => $this->getSetting('text_processing'),
       '#options' => array(
         t('Plain text'),
         t('Filtered text (user selects text format)'),

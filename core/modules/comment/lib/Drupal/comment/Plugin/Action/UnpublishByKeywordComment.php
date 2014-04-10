@@ -7,9 +7,9 @@
 
 namespace Drupal\comment\Plugin\Action;
 
-use Drupal\Core\Annotation\Action;
-use Drupal\Core\Annotation\Translation;
+use Drupal\Component\Utility\Tags;
 use Drupal\Core\Action\ConfigurableActionBase;
+use Drupal\comment\CommentInterface;
 
 /**
  * Unpublishes a comment containing certain keywords.
@@ -30,7 +30,7 @@ class UnpublishByKeywordComment extends ConfigurableActionBase {
     $text = drupal_render($build);
     foreach ($this->configuration['keywords'] as $keyword) {
       if (strpos($text, $keyword) !== FALSE) {
-        $comment->status->value = COMMENT_NOT_PUBLISHED;
+        $comment->setPublished(FALSE);
         $comment->save();
         break;
       }
@@ -54,7 +54,7 @@ class UnpublishByKeywordComment extends ConfigurableActionBase {
       '#title' => t('Keywords'),
       '#type' => 'textarea',
       '#description' => t('The comment will be unpublished if it contains any of the phrases above. Use a case-sensitive, comma-separated list of phrases. Example: funny, bungee jumping, "Company, Inc."'),
-      '#default_value' => drupal_implode_tags($this->configuration['keywords']),
+      '#default_value' => Tags::implode($this->configuration['keywords']),
     );
     return $form;
   }
@@ -63,7 +63,7 @@ class UnpublishByKeywordComment extends ConfigurableActionBase {
    * {@inheritdoc}
    */
   public function submitConfigurationForm(array &$form, array &$form_state) {
-    $this->configuration['keywords'] = drupal_explode_tags($form_state['values']['keywords']);
+    $this->configuration['keywords'] = Tags::explode($form_state['values']['keywords']);
   }
 
 }

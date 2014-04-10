@@ -8,14 +8,13 @@
 namespace Drupal\comment\Plugin\views\filter;
 
 use Drupal\views\Plugin\views\filter\Date;
-use Drupal\Component\Annotation\PluginID;
 
 /**
  * Filter handler for the newer of last comment / node updated.
  *
  * @ingroup views_filter_handlers
  *
- * @PluginID("comment_ces_last_updated")
+ * @ViewsFilter("comment_ces_last_updated")
  */
 class StatisticsLastUpdated extends Date {
 

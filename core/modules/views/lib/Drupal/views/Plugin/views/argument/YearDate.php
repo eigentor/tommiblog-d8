@@ -7,12 +7,10 @@
 
 namespace Drupal\views\Plugin\views\argument;
 
-use Drupal\Component\Annotation\PluginID;
-
 /**
  * Argument handler for a year (CCYY)
  *
- * @PluginID("date_year")
+ * @ViewsArgument("date_year")
  */
 class YearDate extends Date {
 

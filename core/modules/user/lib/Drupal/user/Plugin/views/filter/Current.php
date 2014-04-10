@@ -7,7 +7,6 @@
 
 namespace Drupal\user\Plugin\views\filter;
 
-use Drupal\Component\Annotation\PluginID;
 use Drupal\views\Plugin\views\display\DisplayPluginBase;
 use Drupal\views\ViewExecutable;
 use Drupal\views\Plugin\views\filter\BooleanOperator;
@@ -17,7 +16,7 @@ use Drupal\views\Plugin\views\filter\BooleanOperator;
  *
  * @ingroup views_filter_handlers
  *
- * @PluginID("user_current")
+ * @ViewsFilter("user_current")
  */
 class Current extends BooleanOperator {
 

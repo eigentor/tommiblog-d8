@@ -13,7 +13,7 @@ use Drupal\Component\Utility\String;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\field\FieldInfo;
-use Drupal\taxonomy\TermStorageControllerInterface;
+use Drupal\taxonomy\TermStorageInterface;
 use Drupal\taxonomy\VocabularyInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -40,9 +40,9 @@ class TermAutocompleteController implements ContainerInjectionInterface {
   protected $fieldInfo;
 
   /**
-   * Term storage controller.
+   * Term storage.
    *
-   * @var \Drupal\taxonomy\TermStorageControllerInterface
+   * @var \Drupal\taxonomy\TermStorageInterface
    */
   protected $termStorage;
 
@@ -53,10 +53,10 @@ class TermAutocompleteController implements ContainerInjectionInterface {
    *   The entity query service.
    * @param \Drupal\field\FieldInfo $field_info
    *   The field info service.
-   * @param \Drupal\taxonomy\TermStorageControllerInterface $term_storage
-   *   The term storage controller.
+   * @param \Drupal\taxonomy\TermStorageInterface $term_storage
+   *   The term storage.
    */
-  public function __construct(QueryInterface $term_entity_query, FieldInfo $field_info, TermStorageControllerInterface $term_storage) {
+  public function __construct(QueryInterface $term_entity_query, FieldInfo $field_info, TermStorageInterface $term_storage) {
     $this->termEntityQuery = $term_entity_query;
     $this->fieldInfo = $field_info;
     $this->termStorage = $term_storage;
@@ -69,7 +69,7 @@ class TermAutocompleteController implements ContainerInjectionInterface {
     return new static(
       $container->get('entity.query')->get('taxonomy_term'),
       $container->get('field.info'),
-      $container->get('entity.manager')->getStorageController('taxonomy_term')
+      $container->get('entity.manager')->getStorage('taxonomy_term')
     );
   }
 
@@ -110,7 +110,7 @@ class TermAutocompleteController implements ContainerInjectionInterface {
     $tags_typed = $request->query->get('q');
 
     // Make sure the field exists and is a taxonomy field.
-    if (!($field = $this->fieldInfo->getField($entity_type, $field_name)) || $field->getFieldType() !== 'taxonomy_term_reference') {
+    if (!($field = $this->fieldInfo->getField($entity_type, $field_name)) || $field->getType() !== 'taxonomy_term_reference') {
       // Error string. The JavaScript handler will realize this is not JSON and
       // will display it as debugging information.
       return new Response(t('Taxonomy field @field_name not found.', array('@field_name' => $field_name)), 403);
@@ -126,7 +126,7 @@ class TermAutocompleteController implements ContainerInjectionInterface {
 
       // Part of the criteria for the query come from the field's own settings.
       $vids = array();
-      foreach ($field->getFieldSetting('allowed_values') as $tree) {
+      foreach ($field->getSetting('allowed_values') as $tree) {
         $vids[] = $tree['vocabulary'];
       }
 
@@ -195,12 +195,9 @@ class TermAutocompleteController implements ContainerInjectionInterface {
     if (!empty($tids)) {
       $terms = $this->termStorage->loadMultiple(array_keys($tids));
       foreach ($terms as $term) {
-        $name = $term->label();
         // Term names containing commas or quotes must be wrapped in quotes.
-        if (strpos($name, ',') !== FALSE || strpos($name, '"') !== FALSE) {
-          $name = '"' . str_replace('"', '""', $name) . '"';
-        }
-        $matches[] = array('value' => $prefix . $name, 'label' => String::checkPlain($term->label()));
+        $name = Tags::encode($term->getName());
+        $matches[] = array('value' => $prefix . $name, 'label' => String::checkPlain($term->getName()));
       }
       return $matches;
     }

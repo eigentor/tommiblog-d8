@@ -7,13 +7,15 @@
 
 namespace Drupal\Core\Breadcrumb;
 
+use Drupal\Component\Utility\String;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 
 /**
  * Provides a breadcrumb manager.
  *
- * Holds an array of path processor objects and uses them to sequentially process
- * a path, in order of processor priority.
+ * Can be assigned any number of other BreadcrumbBuilderInterface objects
+ * by calling the addBuilder() method, then uses the highest priority one
+ * to build breadcrumbs when build() is called.
  */
 class BreadcrumbManager implements BreadcrumbBuilderInterface {
 
@@ -67,25 +69,34 @@ class BreadcrumbManager implements BreadcrumbBuilderInterface {
   /**
    * {@inheritdoc}
    */
+  public function applies(array $attributes) {
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function build(array $attributes) {
     $breadcrumb = array();
     $context = array('builder' => NULL);
     // Call the build method of registered breadcrumb builders,
     // until one of them returns an array.
     foreach ($this->getSortedBuilders() as $builder) {
-      $build = $builder->build($attributes);
-      if (!isset($build)) {
-        // The builder returned NULL, so we continue with the other builders.
+      if (!$builder->applies($attributes)) {
+        // The builder does not apply, so we continue with the other builders.
         continue;
       }
-      elseif (is_array($build)) {
+
+      $build = $builder->build($attributes);
+
+      if (is_array($build)) {
         // The builder returned an array of breadcrumb links.
         $breadcrumb = $build;
         $context['builder'] = $builder;
         break;
       }
       else {
-        throw new \UnexpectedValueException(format_string('Invalid breadcrumb returned by !class::build().', array('!class' => get_class($builder))));
+        throw new \UnexpectedValueException(String::format('Invalid breadcrumb returned by !class::build().', array('!class' => get_class($builder))));
       }
     }
     // Allow modules to alter the breadcrumb.

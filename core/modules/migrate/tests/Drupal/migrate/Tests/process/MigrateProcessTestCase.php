@@ -12,7 +12,7 @@ use Drupal\migrate\Tests\MigrateTestCase;
 abstract class MigrateProcessTestCase extends MigrateTestCase {
 
   /**
-   * @var \Drupal\migrate\Plugin\migrate\process\TestGet
+   * @var \Drupal\migrate\Plugin\MigrateProcessInterface
    */
   protected $plugin;
 
@@ -26,7 +26,10 @@ abstract class MigrateProcessTestCase extends MigrateTestCase {
    */
   protected $migrateExecutable;
 
-  function setUp() {
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp() {
     $this->row = $this->getMockBuilder('Drupal\migrate\Row')
       ->disableOriginalConstructor()
       ->getMock();

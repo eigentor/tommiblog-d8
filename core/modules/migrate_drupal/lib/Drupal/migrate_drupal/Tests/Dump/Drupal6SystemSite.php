@@ -1,74 +1,53 @@
 <?php
 
-namespace Drupal\migrate_drupal\Tests\Dump;
+/**
+ * @file
+ * Contains \Drupal\migrate_drupal\Tests\Dump\Drupal6SystemSite.
+ */
 
-use Drupal\Core\Database\Connection;
+namespace Drupal\migrate_drupal\Tests\Dump;
 
 /**
  * Database dump for testing system.site.yml migration.
  */
-class Drupal6SystemSite {
+class Drupal6SystemSite extends Drupal6DumpBase {
 
   /**
-   * @param \Drupal\Core\Database\Connection $database
+   * {@inheritdoc}
    */
-  public static function load(Connection $database) {
-    $database->schema()->createTable('variable', array(
-      'fields' => array(
-        'name' => array(
-          'type' => 'varchar',
-          'length' => 128,
-          'not null' => TRUE,
-          'default' => '',
-        ),
-        'value' => array(
-          'type' => 'blob',
-          'not null' => TRUE,
-          'size' => 'big',
-          'translatable' => TRUE,
-        ),
-      ),
-      'primary key' => array(
-        'name',
-      ),
-      'module' => 'system',
-      'name' => 'variable',
-    ));
-    $database->insert('variable')->fields(array(
+  public function load() {
+    $this->createTable('variable');
+    $this->database->insert('variable')->fields(array(
       'name',
       'value',
     ))
     ->values(array(
       'name' => 'site_name',
-      'value' => 's:6:"drupal";',
+      'value' => 's:9:"site_name";',
     ))
     ->values(array(
       'name' => 'site_mail',
-      'value' => 's:17:"admin@example.com";',
+      'value' => 's:21:"site_mail@example.com";',
     ))
     ->values(array(
       'name' => 'site_slogan',
-      'value' => 's:13:"Migrate rocks";',
+      'value' => serialize('Migrate rocks'),
     ))
     ->values(array(
       'name' => 'site_frontpage',
-      'value' => 's:12:"anonymous-hp";',
+      'value' => 's:4:"node";',
     ))
     ->values(array(
       'name' => 'site_403',
-      'value' => 's:4:"user";',
+      'value' => serialize('user'),
     ))
     ->values(array(
       'name' => 'site_404',
       'value' => 's:14:"page-not-found";',
     ))
     ->values(array(
-      'name' => 'drupal_weight_select_max',
-      'value' => 'i:99;',
-    ))
-    ->values(array(
       'name' => 'admin_compact_mode',
-      'value' => 'b:0;',
+      'value' => serialize(FALSE),
     ))
     ->execute();
   }

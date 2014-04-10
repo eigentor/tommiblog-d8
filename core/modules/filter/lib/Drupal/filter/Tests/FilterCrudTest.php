@@ -34,16 +34,17 @@ class FilterCrudTest extends DrupalUnitTestBase {
    */
   function testTextFormatCrud() {
     // Add a text format with minimum data only.
-    $format = entity_create('filter_format', array());
+    $format = entity_create('filter_format');
     $format->format = 'empty_format';
     $format->name = 'Empty format';
     $format->save();
     $this->verifyTextFormat($format);
 
     // Add another text format specifying all possible properties.
-    $format = entity_create('filter_format', array());
-    $format->format = 'custom_format';
-    $format->name = 'Custom format';
+    $format = entity_create('filter_format', array(
+      'format' => 'custom_format',
+      'name' => 'Custom format',
+    ));
     $format->setFilterConfig('filter_url', array(
       'status' => 1,
       'settings' => array(
@@ -83,7 +84,7 @@ class FilterCrudTest extends DrupalUnitTestBase {
    */
   function verifyTextFormat($format) {
     $t_args = array('%format' => $format->name);
-    $default_langcode = language_default()->id;
+    $default_langcode = \Drupal::languageManager()->getDefaultLanguage()->id;
 
     // Verify the loaded filter has all properties.
     $filter_format = entity_load('filter_format', $format->format);

@@ -9,7 +9,6 @@ namespace Drupal\views\Plugin\views\argument;
 
 use Drupal\views\ViewExecutable;
 use Drupal\views\Plugin\views\display\DisplayPluginBase;
-use Drupal\Component\Annotation\PluginID;
 use Drupal\views\ManyToOneHelper;
 
 /**
@@ -25,7 +24,7 @@ use Drupal\views\ManyToOneHelper;
  *
  * @ingroup views_argument_handlers
  *
- * @PluginID("many_to_one")
+ * @ViewsArgument("many_to_one")
  */
 class ManyToOne extends ArgumentPluginBase {
 

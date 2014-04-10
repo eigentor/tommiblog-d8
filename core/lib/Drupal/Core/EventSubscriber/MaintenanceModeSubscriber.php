@@ -7,6 +7,7 @@
 
 namespace Drupal\Core\EventSubscriber;
 
+use Drupal\Component\Utility\Xss;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -44,10 +45,10 @@ class MaintenanceModeSubscriber implements EventSubscriberInterface {
     if ($request->attributes->get('_maintenance') != MENU_SITE_ONLINE && !($response instanceof RedirectResponse)) {
       // Deliver the 503 page.
       drupal_maintenance_theme();
-      drupal_set_title(t('Site under maintenance'));
       $maintenance_page = array(
         '#theme' => 'maintenance_page',
-        '#content' => filter_xss_admin(
+        '#title' => t('Site under maintenance'),
+        '#content' => Xss::filterAdmin(
           t(\Drupal::config('system.maintenance')->get('message'), array('@site' => \Drupal::config('system.site')->get('name')))
         ),
       );

@@ -7,12 +7,12 @@
 
 namespace Drupal\system\Form;
 
+use Drupal\Core\Render\Element;
 use Drupal\Core\StreamWrapper\PublicStream;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Drupal\Core\Cache\Cache;
-use Drupal\Core\Config\ConfigFactory;
-use Drupal\Core\Config\Context\ContextInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 
@@ -31,15 +31,13 @@ class ThemeSettingsForm extends ConfigFormBase {
   /**
    * Constructs a ThemeSettingsForm object.
    *
-   * @param \Drupal\Core\Config\ConfigFactory $config_factory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The factory for configuration objects.
-   * @param \Drupal\Core\Config\Context\ContextInterface $context
-   *   The configuration context to use.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface
    *   The module handler instance to use.
    */
-  public function __construct(ConfigFactory $config_factory, ContextInterface $context, ModuleHandlerInterface $module_handler) {
-    parent::__construct($config_factory, $context);
+  public function __construct(ConfigFactoryInterface $config_factory, ModuleHandlerInterface $module_handler) {
+    parent::__construct($config_factory);
 
     $this->moduleHandler = $module_handler;
   }
@@ -50,7 +48,6 @@ class ThemeSettingsForm extends ConfigFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
-      $container->get('config.context.free'),
       $container->get('module_handler')
     );
   }
@@ -126,6 +123,7 @@ class ThemeSettingsForm extends ConfigFormBase {
     $form['theme_settings'] = array(
       '#type' => 'details',
       '#title' => t('Toggle display'),
+      '#open' => TRUE,
       '#description' => t('Enable or disable the display of certain page elements.'),
     );
     foreach ($toggles as $name => $title) {
@@ -138,7 +136,7 @@ class ThemeSettingsForm extends ConfigFormBase {
       }
     }
 
-    if (!element_children($form['theme_settings'])) {
+    if (!Element::children($form['theme_settings'])) {
       // If there is no element in the theme settings details then do not show
       // it -- but keep it in the form if another module wants to alter.
       $form['theme_settings']['#access'] = FALSE;
@@ -149,6 +147,7 @@ class ThemeSettingsForm extends ConfigFormBase {
       $form['logo'] = array(
         '#type' => 'details',
         '#title' => t('Logo image settings'),
+        '#open' => TRUE,
         '#attributes' => array('class' => array('theme-settings-bottom')),
         '#states' => array(
           // Hide the logo image settings fieldset when logo display is disabled.
@@ -189,6 +188,7 @@ class ThemeSettingsForm extends ConfigFormBase {
       $form['favicon'] = array(
         '#type' => 'details',
         '#title' => t('Shortcut icon settings'),
+        '#open' => TRUE,
         '#description' => t("Your shortcut icon, or 'favicon', is displayed in the address bar and bookmarks of most browsers."),
         '#states' => array(
           // Hide the shortcut icon settings fieldset when shortcut icon display
@@ -265,6 +265,7 @@ class ThemeSettingsForm extends ConfigFormBase {
         $form['engine_specific'] = array(
           '#type' => 'details',
           '#title' => t('Theme-engine-specific settings'),
+          '#open' => TRUE,
           '#description' => t('These settings only exist for the themes based on the %engine theme engine.', array('%engine' => $themes[$theme]->prefix)),
         );
         $function($form, $form_state);
@@ -288,7 +289,7 @@ class ThemeSettingsForm extends ConfigFormBase {
       // Process the theme and all its base themes.
       foreach ($theme_keys as $theme) {
         // Include the theme-settings.php file.
-        $filename = DRUPAL_ROOT . '/' . str_replace("/$theme.info.yml", '', $themes[$theme]->filename) . '/theme-settings.php';
+        $filename = DRUPAL_ROOT . '/' . $themes[$theme]->getPath() . '/theme-settings.php';
         if (file_exists($filename)) {
           require_once $filename;
         }
@@ -332,7 +333,7 @@ class ThemeSettingsForm extends ConfigFormBase {
         }
         else {
           // File upload failed.
-          form_set_error('logo_upload', $form_state, t('The logo could not be uploaded.'));
+          $this->setFormError('logo_upload', $form_state, $this->t('The logo could not be uploaded.'));
         }
       }
 
@@ -348,7 +349,7 @@ class ThemeSettingsForm extends ConfigFormBase {
         }
         else {
           // File upload failed.
-          form_set_error('favicon_upload', $form_state, t('The favicon could not be uploaded.'));
+          $this->setFormError('favicon_upload', $form_state, $this->t('The favicon could not be uploaded.'));
         }
       }
 
@@ -357,13 +358,13 @@ class ThemeSettingsForm extends ConfigFormBase {
       if ($form_state['values']['logo_path']) {
         $path = $this->validatePath($form_state['values']['logo_path']);
         if (!$path) {
-          form_set_error('logo_path', $form_state, t('The custom logo path is invalid.'));
+          $this->setFormError('logo_path', $form_state, $this->t('The custom logo path is invalid.'));
         }
       }
       if ($form_state['values']['favicon_path']) {
         $path = $this->validatePath($form_state['values']['favicon_path']);
         if (!$path) {
-          form_set_error('favicon_path', $form_state, t('The custom favicon path is invalid.'));
+          $this->setFormError('favicon_path', $form_state, $this->t('The custom favicon path is invalid.'));
         }
       }
     }
@@ -418,6 +419,16 @@ class ThemeSettingsForm extends ConfigFormBase {
 
     theme_settings_convert_to_config($values, $config)->save();
 
+    // Invalidate either the theme-specific cache tag or the global theme
+    // settings cache tag, depending on whose settings were actually changed.
+    if (isset($values['theme'])) {
+      Cache::invalidateTags(array('theme' => $values['theme']));
+    }
+    else {
+      Cache::invalidateTags(array('theme_global_settings' => TRUE));
+    }
+
+    // @todo Remove this in https://drupal.org/node/2124957.
     Cache::invalidateTags(array('content' => TRUE));
   }
 

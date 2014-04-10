@@ -7,8 +7,7 @@
 
 namespace Drupal\language\Form;
 
-use Drupal\Core\Config\ConfigFactory;
-use Drupal\Core\Config\Context\ContextInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -31,8 +30,8 @@ class NegotiationBrowserForm extends ConfigFormBase {
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler
    */
-  public function __construct(ConfigFactory $config_factory, ContextInterface $context, ModuleHandlerInterface $module_handler) {
-    parent::__construct($config_factory, $context);
+  public function __construct(ConfigFactoryInterface $config_factory, ModuleHandlerInterface $module_handler) {
+    parent::__construct($config_factory);
     $this->moduleHandler = $module_handler;
   }
 
@@ -42,7 +41,6 @@ class NegotiationBrowserForm extends ConfigFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
-      $container->get('config.context.free'),
       $container->get('module_handler')
     );
   }
@@ -109,7 +107,6 @@ class NegotiationBrowserForm extends ConfigFormBase {
     $form['new_mapping'] = array(
       '#type' => 'details',
       '#title' => $this->t('Add a new mapping'),
-      '#collapsed' => TRUE,
       '#tree' => TRUE,
     );
     $form['new_mapping']['browser_langcode'] = array(
@@ -143,10 +140,10 @@ class NegotiationBrowserForm extends ConfigFormBase {
       foreach ($mappings as $key => $data) {
         // Make sure browser_langcode is unique.
         if (array_key_exists($data['browser_langcode'], $unique_values)) {
-          form_set_error('mappings][' . $key . '][browser_langcode', $form_state, $this->t('Browser language codes must be unique.'));
+          $this->setFormError('mappings][' . $key . '][browser_langcode', $form_state, $this->t('Browser language codes must be unique.'));
         }
         elseif (preg_match('/[^a-z\-]/', $data['browser_langcode'])) {
-          form_set_error('mappings][' . $key . '][browser_langcode', $form_state, $this->t('Browser language codes can only contain lowercase letters and a hyphen(-).'));
+          $this->setFormError('mappings][' . $key . '][browser_langcode', $form_state, $this->t('Browser language codes can only contain lowercase letters and a hyphen(-).'));
         }
         $unique_values[$data['browser_langcode']] = $data['drupal_langcode'];
       }
@@ -157,10 +154,10 @@ class NegotiationBrowserForm extends ConfigFormBase {
     if (!empty($data['browser_langcode'])) {
       // Make sure browser_langcode is unique.
       if (array_key_exists($data['browser_langcode'], $unique_values)) {
-        form_set_error('mappings][' . $key . '][browser_langcode', $form_state, $this->t('Browser language codes must be unique.'));
+        $this->setFormError('mappings][' . $key . '][browser_langcode', $form_state, $this->t('Browser language codes must be unique.'));
       }
       elseif (preg_match('/[^a-z\-]/', $data['browser_langcode'])) {
-        form_set_error('mappings][' . $key . '][browser_langcode', $form_state, $this->t('Browser language codes can only contain lowercase letters and a hyphen(-).'));
+        $this->setFormError('mappings][' . $key . '][browser_langcode', $form_state, $this->t('Browser language codes can only contain lowercase letters and a hyphen(-).'));
       }
       $unique_values[$data['browser_langcode']] = $data['drupal_langcode'];
     }
@@ -196,5 +193,5 @@ class NegotiationBrowserForm extends ConfigFormBase {
     }
     return $config->get();
   }
-
 }
+

@@ -45,24 +45,15 @@ function action_permission() {
 }
 
 /**
- * Implements hook_menu().
+ * Implements hook_entity_type_build().
  */
-function action_menu() {
-  $items['admin/config/system/actions'] = array(
-    'title' => 'Actions',
-    'description' => 'Manage the actions defined for your site.',
-    'route_name' => 'action.admin',
-  );
-  return $items;
-}
-
-/**
- * Implements hook_entity_info().
- */
-function action_entity_info(&$entity_info) {
-  $entity_info['action']['controllers']['form']['add'] = 'Drupal\action\ActionAddFormController';
-  $entity_info['action']['controllers']['form']['edit'] = 'Drupal\action\ActionEditFormController';
-  $entity_info['action']['controllers']['form']['delete'] = 'Drupal\action\Form\ActionDeleteForm';
-  $entity_info['action']['controllers']['list'] = 'Drupal\action\ActionListController';
-  $entity_info['action']['links']['edit-form'] = 'action.admin_configure';
+function action_entity_type_build(array &$entity_types) {
+  /** @var $entity_types \Drupal\Core\Entity\EntityTypeInterface[] */
+  $entity_types['action']
+    ->setFormClass('add', 'Drupal\action\ActionAddFormController')
+    ->setFormClass('edit', 'Drupal\action\ActionEditFormController')
+    ->setFormClass('delete', 'Drupal\action\Form\ActionDeleteForm')
+    ->setListBuilderClass('Drupal\action\ActionListBuilder')
+    ->setLinkTemplate('delete-form', 'action.delete')
+    ->setLinkTemplate('edit-form', 'action.admin_configure');
 }

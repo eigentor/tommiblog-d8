@@ -132,17 +132,6 @@ interface ImageToolkitInterface extends PluginInspectionInterface {
   public function desaturate(ImageInterface $image);
 
   /**
-   * Creates an image resource from a file.
-   *
-   * @param \Drupal\Core\Image\ImageInterface $image
-   *   An image object. The $image->resource value will populated by this call.
-   *
-   * @return bool
-   *   TRUE or FALSE, based on success.
-   */
-  public function load(ImageInterface $image);
-
-  /**
    * Writes an image resource to a destination file.
    *
    * @param \Drupal\Core\Image\ImageInterface $image
@@ -210,11 +199,24 @@ interface ImageToolkitInterface extends PluginInspectionInterface {
    *   - "width": Width, in pixels.
    *   - "height": Height, in pixels.
    *   - "type": Image type represented as an IMAGETYPE_* constant.
-   *   - "mime_type": MIME type (e.g. 'image/jpeg', 'image/gif', 'image/png').
    *
    * @see \Drupal\Core\Image\ImageInterface::processInfo()
    */
   public function getInfo(ImageInterface $image);
+
+  /**
+   * Gets toolkit requirements in a format suitable for hook_requirements().
+   *
+   * @return array
+   *   An associative requirements array as is returned by hook_requirements().
+   *   If the toolkit claims no requirements to the system, returns an empty
+   *   array. The array can have arbitrary keys and they do not have to be
+   *   prefixed by e.g. the module name or toolkit ID, as the system will make
+   *   the keys globally unique.
+   *
+   * @see hook_requirements()
+   */
+  public function getRequirements();
 
   /**
    * Verifies Image Toolkit is set up correctly.

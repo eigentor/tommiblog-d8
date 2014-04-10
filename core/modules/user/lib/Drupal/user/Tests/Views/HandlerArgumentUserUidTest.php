@@ -7,6 +7,8 @@
 
 namespace Drupal\user\Tests\Views;
 
+use Drupal\views\Views;
+
 /**
  * Tests views user uid argument handler.
  */
@@ -31,7 +33,7 @@ class HandlerArgumentUserUidTest extends UserTestBase {
    * Tests the generated title of an user: uid argument.
    */
   public function testArgumentTitle() {
-    $view = views_get_view('test_user_uid_argument');
+    $view = Views::getView('test_user_uid_argument');
 
     // Tests an invalid user uid.
     $this->executeView($view, array(rand(1000, 10000)));
@@ -42,6 +44,17 @@ class HandlerArgumentUserUidTest extends UserTestBase {
     $account = $this->drupalCreateUser();
     $this->executeView($view, array($account->id()));
     $this->assertEqual($view->getTitle(), $account->label());
+    $view->destroy();
+
+    // Tests the anonymous user.
+    $anonymous = $this->container->get('config.factory')->get('user.settings')->get('anonymous');
+    $this->executeView($view, array(0));
+    $this->assertEqual($view->getTitle(), $anonymous);
+    $view->destroy();
+
+    $view->getDisplay()->getHandler('argument', 'uid')->options['break_phrase'] = TRUE;
+    $this->executeView($view, array($account->id() . ',0'));
+    $this->assertEqual($view->getTitle(), $account->label() . ', ' . $anonymous);
     $view->destroy();
   }
 

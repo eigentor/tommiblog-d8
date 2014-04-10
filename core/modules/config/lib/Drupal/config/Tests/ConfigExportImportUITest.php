@@ -15,17 +15,8 @@ use Drupal\simpletest\WebTestBase;
  * Each testX method does a complete rebuild of a Drupal site, so values being
  * tested need to be stored in protected properties in order to survive until
  * the next rebuild.
- *
- * Each testX method is executed alphabetically, so naming is important.
  */
 class ConfigExportImportUITest extends WebTestBase {
-
-  /**
-   * The slogan value, for a simple export test case.
-   *
-   * @var string
-   */
-  protected $slogan;
 
   /**
    * The contents of the config export tarball, held between test methods.
@@ -35,19 +26,15 @@ class ConfigExportImportUITest extends WebTestBase {
   protected $tarball;
 
   /**
-   * The name of the role with config UI administer permissions.
+   * Modules to enable.
    *
-   * @var string
+   * @var array
    */
-  protected $admin_role;
+  public static $modules = array('config', 'node', 'field');
 
   /**
-   * Sort methods alphabetically in order to allow for a predictable sequence.
+   * {@inheritdoc}
    */
-  const SORT_METHODS = TRUE;
-
-  public static $modules = array('config');
-
   public static function getInfo() {
     return array(
       'name' => 'Export/import UI',
@@ -56,6 +43,9 @@ class ConfigExportImportUITest extends WebTestBase {
     );
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function setUp() {
     parent::setUp();
     // The initial import must be done with uid 1 because if separately named
@@ -66,47 +56,78 @@ class ConfigExportImportUITest extends WebTestBase {
   }
 
   /**
-   * Tests a simple site configuration export case: site slogan.
+   * Tests a simple site export import case.
    */
-  function testExport() {
-    // Create a role for second round.
-    $this->admin_role = $this->drupalCreateRole(array('synchronize configuration', 'import configuration'));
-    $this->slogan = $this->randomString(16);
+  public function testExportImport() {
+    $this->originalSlogan = \Drupal::config('system.site')->get('slogan');
+    $this->newSlogan = $this->randomString(16);
+    $this->assertNotEqual($this->newSlogan, $this->originalSlogan);
     \Drupal::config('system.site')
-      ->set('slogan', $this->slogan)
+      ->set('slogan', $this->newSlogan)
       ->save();
+    $this->assertEqual(\Drupal::config('system.site')->get('slogan'), $this->newSlogan);
+
+    // Create a content type.
+    $this->content_type = $this->drupalCreateContentType();
+
+    // Create a field.
+    $this->field = entity_create('field_config', array(
+      'name' => drupal_strtolower($this->randomName()),
+      'entity_type' => 'node',
+      'type' => 'text',
+    ));
+    $this->field->save();
+    entity_create('field_instance_config', array(
+      'field_name' => $this->field->name,
+      'entity_type' => 'node',
+      'bundle' => $this->content_type->type,
+    ))->save();
+    entity_get_form_display('node', $this->content_type->type, 'default')
+      ->setComponent($this->field->name, array(
+        'type' => 'text_textfield',
+      ))
+      ->save();
+    entity_get_display('node', $this->content_type->type, 'full')
+      ->setComponent($this->field->name)
+      ->save();
+
+    $this->drupalGet('node/add/' . $this->content_type->type);
+    $this->assertFieldByName("{$this->field->name}[0][value]", '', 'Widget is displayed');
+
+    // Export the configuration.
     $this->drupalPostForm('admin/config/development/configuration/full/export', array(), 'Export');
     $this->tarball = $this->drupalGetContent();
-  }
 
-  /**
-   * Tests importing the tarball to ensure changes made it over.
-   */
-  function testImport() {
+    \Drupal::config('system.site')
+      ->set('slogan', $this->originalSlogan)
+      ->save();
+    $this->assertEqual(\Drupal::config('system.site')->get('slogan'), $this->originalSlogan);
+
+    // Delete the custom field.
+    $field_instances = entity_load_multiple('field_instance_config');
+    foreach ($field_instances as $field_instance) {
+      if ($field_instance->field_name == $this->field->name) {
+        $field_instance->delete();
+      }
+    }
+    $fields = entity_load_multiple('field_config');
+    foreach ($fields as $field) {
+      if ($field->name == $this->field->name) {
+        $field->delete();
+      }
+    }
+    $this->drupalGet('node/add/' . $this->content_type->type);
+    $this->assertNoFieldByName("{$this->field->name}[0][value]", '', 'Widget is not displayed');
+
+    // Import the configuration.
     $filename = 'temporary://' . $this->randomName();
     file_put_contents($filename, $this->tarball);
-    $this->doImport($filename);
-    // Now that the role is imported, change the slogan and re-import with a non-root user.
-    $web_user = $this->drupalCreateUser();
-    $web_user->addRole($this->admin_role);
-    $web_user->save();
-    $this->drupalLogin($web_user);
-    \Drupal::config('system.site')
-      ->set('slogan', $this->randomString(16))
-      ->save();
-    $this->doImport($filename);
-  }
-
-  /**
-   * Import a tarball and assert the data is correct.
-   *
-   * @param string $filename
-   *   The name of the tarball containing the configuration to be imported.
-   */
-  protected function doImport($filename) {
-    $this->assertNotEqual($this->slogan, \Drupal::config('system.site')->get('slogan'));
     $this->drupalPostForm('admin/config/development/configuration/full/import', array('files[import_tarball]' => $filename), 'Upload');
     $this->drupalPostForm(NULL, array(), 'Import all');
-    $this->assertEqual($this->slogan, \Drupal::config('system.site')->get('slogan'));
+
+    $this->assertEqual(\Drupal::config('system.site')->get('slogan'), $this->newSlogan);
+
+    $this->drupalGet('node/add');
+    $this->assertFieldByName("{$this->field->name}[0][value]", '', 'Widget is displayed');
   }
 }

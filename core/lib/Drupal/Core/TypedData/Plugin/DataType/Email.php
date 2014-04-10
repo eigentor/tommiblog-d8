@@ -7,8 +7,6 @@
 
 namespace Drupal\Core\TypedData\Plugin\DataType;
 
-use Drupal\Core\TypedData\Annotation\DataType;
-use Drupal\Core\Annotation\Translation;
 use Drupal\Core\TypedData\Type\StringInterface;
 
 /**
@@ -19,7 +17,7 @@ use Drupal\Core\TypedData\Type\StringInterface;
  * @DataType(
  *   id = "email",
  *   label = @Translation("Email"),
- *   constraints = {"Email" = TRUE}
+ *   constraints = {"Email" = {}}
  * )
  */
 class Email extends String implements StringInterface {

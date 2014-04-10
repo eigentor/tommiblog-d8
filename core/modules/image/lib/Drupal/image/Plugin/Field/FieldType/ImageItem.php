@@ -7,8 +7,8 @@
 
 namespace Drupal\image\Plugin\Field\FieldType;
 
+use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\TypedData\DataDefinition;
-use Drupal\field\FieldInterface;
 use Drupal\file\Plugin\Field\FieldType\FileItem;
 
 /**
@@ -18,50 +18,24 @@ use Drupal\file\Plugin\Field\FieldType\FileItem;
  *   id = "image",
  *   label = @Translation("Image"),
  *   description = @Translation("This field stores the ID of an image file as an integer value."),
- *   settings = {
- *     "uri_scheme" = "",
- *     "default_image" = {
- *       "fid" = NULL,
- *       "alt" = "",
- *       "title" = "",
- *       "width" = NULL,
- *       "height" = NULL
- *     },
- *     "column_groups" = {
- *       "file" = {
- *         "label" = @Translation("File"),
- *         "columns" = { "target_id", "width", "height" }
- *       },
- *       "alt" = {
- *         "label" = @Translation("Alt"),
- *         "translatable" = TRUE
- *       },
- *       "title" = {
- *         "label" = @Translation("Title"),
- *         "translatable" = TRUE
- *       }
- *     }
- *   },
- *   instance_settings = {
- *     "file_extensions" = "png gif jpg jpeg",
- *     "file_directory" = "",
- *     "max_filesize" = "",
- *     "alt_field" = "0",
- *     "alt_field_required" = "0",
- *     "title_field" = "0",
- *     "title_field_required" = "0",
- *     "max_resolution" = "",
- *     "min_resolution" = "",
- *     "default_image" = {
- *       "fid" = NULL,
- *       "alt" = "",
- *       "title" = "",
- *       "width" = NULL,
- *       "height" = NULL
- *     }
- *   },
  *   default_widget = "image_image",
  *   default_formatter = "image",
+ *   column_groups = {
+ *     "file" = {
+ *       "label" = @Translation("File"),
+ *       "columns" = {
+ *         "target_id", "width", "height"
+ *       }
+ *     },
+ *     "alt" = {
+ *       "label" = @Translation("Alt"),
+ *       "translatable" = TRUE
+ *     },
+ *     "title" = {
+ *       "label" = @Translation("Title"),
+ *       "translatable" = TRUE
+ *     },
+ *   },
  *   list_class = "\Drupal\file\Plugin\Field\FieldType\FileFieldItemList"
  * )
  */
@@ -70,7 +44,47 @@ class ImageItem extends FileItem {
   /**
    * {@inheritdoc}
    */
-  public static function schema(FieldInterface $field) {
+  public static function defaultSettings() {
+    return array(
+      'default_image' => array(
+        'fid' => NULL,
+        'alt' => '',
+        'title' => '',
+        'width' => NULL,
+        'height' => NULL,
+      ),
+    ) + parent::defaultSettings();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function defaultInstanceSettings() {
+    $settings = array(
+      'file_extensions' => 'png gif jpg jpeg',
+      'alt_field' => 0,
+      'alt_field_required' => 0,
+      'title_field' => 0,
+      'title_field_required' => 0,
+      'max_resolution' => '',
+      'min_resolution' => '',
+      'default_image' => array(
+        'fid' => NULL,
+        'alt' => '',
+        'title' => '',
+        'width' => NULL,
+        'height' => NULL,
+      ),
+    ) + parent::defaultInstanceSettings();
+
+    unset($settings['description_field']);
+    return $settings;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function schema(FieldDefinitionInterface $field_definition) {
     return array(
       'columns' => array(
         'target_id' => array(
@@ -117,25 +131,22 @@ class ImageItem extends FileItem {
   /**
    * {@inheritdoc}
    */
-  public function getPropertyDefinitions() {
-    $this->definition->setSetting('target_type', 'file');
+  public static function propertyDefinitions(FieldDefinitionInterface $field_definition) {
+    $properties = parent::propertyDefinitions($field_definition);
 
-    if (!isset(static::$propertyDefinitions)) {
-      static::$propertyDefinitions = parent::getPropertyDefinitions();
+    $properties['alt'] = DataDefinition::create('string')
+      ->setLabel(t("Alternative image text, for the image's 'alt' attribute."));
 
-      static::$propertyDefinitions['alt'] = DataDefinition::create('string')
-        ->setLabel(t("Alternative image text, for the image's 'alt' attribute."));
+    $properties['title'] = DataDefinition::create('string')
+      ->setLabel(t("Image title text, for the image's 'title' attribute."));
 
-      static::$propertyDefinitions['title'] = DataDefinition::create('string')
-        ->setLabel(t("Image title text, for the image's 'title' attribute."));
+    $properties['width'] = DataDefinition::create('integer')
+      ->setLabel(t('The width of the image in pixels.'));
 
-      static::$propertyDefinitions['width'] = DataDefinition::create('integer')
-        ->setLabel(t('The width of the image in pixels.'));
+    $properties['height'] = DataDefinition::create('integer')
+      ->setLabel(t('The height of the image in pixels.'));
 
-      static::$propertyDefinitions['height'] = DataDefinition::create('integer')
-        ->setLabel(t('The height of the image in pixels.'));
-    }
-    return static::$propertyDefinitions;
+    return $properties;
   }
 
   /**
@@ -147,7 +158,7 @@ class ImageItem extends FileItem {
     // We need the field-level 'default_image' setting, and $this->getSettings()
     // will only provide the instance-level one, so we need to explicitly fetch
     // the field.
-    $settings = $this->getFieldDefinition()->getField()->getFieldSettings();
+    $settings = $this->getFieldDefinition()->getField()->getSettings();
 
     $scheme_options = array();
     foreach (file_get_stream_wrappers(STREAM_WRAPPERS_WRITE_VISIBLE) as $scheme => $stream_wrapper) {
@@ -175,7 +186,7 @@ class ImageItem extends FileItem {
     // Get base form from FileItem::instanceSettingsForm().
     $element = parent::instanceSettingsForm($form, $form_state);
 
-    $settings = $this->getFieldSettings();
+    $settings = $this->getSettings();
 
     // Add maximum and minimum resolution settings.
     $max_resolution = explode('x', $settings['max_resolution']) + array('', '');
@@ -284,6 +295,8 @@ class ImageItem extends FileItem {
    * {@inheritdoc}
    */
   public function preSave() {
+    parent::preSave();
+
     $width = $this->width;
     $height = $this->height;
 
@@ -335,6 +348,7 @@ class ImageItem extends FileItem {
       '#description' => t('Image to be shown if no image is uploaded.'),
       '#default_value' => empty($settings['default_image']['fid']) ? array() : array($settings['default_image']['fid']),
       '#upload_location' => $settings['uri_scheme'] . '://default_images/',
+      '#element_validate' => array('file_managed_file_validate', array(get_class($this), 'validateDefaultImageForm')),
     );
     $element['default_image']['alt'] = array(
       '#type' => 'textfield',
@@ -358,6 +372,30 @@ class ImageItem extends FileItem {
       '#type' => 'value',
       '#value' => $settings['default_image']['height'],
     );
+  }
+
+  /**
+   * Validates the managed_file element for the default Image form.
+   *
+   * This function ensures the fid is a scalar value and not an array. It is
+   * assigned as a #element_validate callback in
+   * \Drupal\image\Plugin\Field\FieldType\ImageItem::defaultImageForm().
+   *
+   * @param array $element
+   *   The form element to process.
+   * @param array $form_state
+   *   The form state.
+   */
+  public static function validateDefaultImageForm(array &$element, array &$form_state) {
+    // Consolidate the array value of this field to a single FID as #extended
+    // for default image is not TRUE and this is a single value.
+    if (isset($element['fids']['#value'][0])) {
+      $value = $element['fids']['#value'][0];
+    }
+    else {
+      $value = 0;
+    }
+    \Drupal::formBuilder()->setValue($element, $value, $form_state);
   }
 
   /**

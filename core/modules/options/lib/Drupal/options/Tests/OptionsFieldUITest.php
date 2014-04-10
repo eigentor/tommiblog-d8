@@ -19,7 +19,7 @@ class OptionsFieldUITest extends FieldTestBase {
    *
    * @var array
    */
-  public static $modules = array('options', 'field_test', 'taxonomy', 'field_ui');
+  public static $modules = array('node', 'options', 'field_test', 'taxonomy', 'field_ui');
 
   /**
    * The name of the created content type.
@@ -232,9 +232,9 @@ class OptionsFieldUITest extends FieldTestBase {
     $this->assertFieldByName('on', $on, t("The 'On' value is stored correctly."));
     $this->assertFieldByName('off', $off, t("The 'Off' value is stored correctly."));
     $field = field_info_field('node', $this->field_name);
-    $this->assertEqual($field->getFieldSetting('allowed_values'), $allowed_values, 'The allowed value is correct');
-    $this->assertNull($field->getFieldSetting('on'), 'The on value is not saved into settings');
-    $this->assertNull($field->getFieldSetting('off'), 'The off value is not saved into settings');
+    $this->assertEqual($field->getSetting('allowed_values'), $allowed_values, 'The allowed value is correct');
+    $this->assertNull($field->getSetting('on'), 'The on value is not saved into settings');
+    $this->assertNull($field->getSetting('off'), 'The off value is not saved into settings');
   }
 
   /**
@@ -258,12 +258,12 @@ class OptionsFieldUITest extends FieldTestBase {
    */
   protected function createOptionsField($type) {
     // Create a test field and instance.
-    entity_create('field_entity', array(
+    entity_create('field_config', array(
       'name' => $this->field_name,
       'entity_type' => 'node',
       'type' => $type,
     ))->save();
-    entity_create('field_instance', array(
+    entity_create('field_instance_config', array(
       'field_name' => $this->field_name,
       'entity_type' => 'node',
       'bundle' => $this->type,
@@ -282,7 +282,7 @@ class OptionsFieldUITest extends FieldTestBase {
    *   element.
    * @param $result
    *   Either an expected resulting array in
-   *   $field->getFieldSetting('allowed_values'), or an expected error message.
+   *   $field->getSetting('allowed_values'), or an expected error message.
    * @param $message
    *   Message to display.
    */
@@ -296,7 +296,7 @@ class OptionsFieldUITest extends FieldTestBase {
     else {
       field_info_cache_clear();
       $field = field_info_field('node', $this->field_name);
-      $this->assertIdentical($field->getFieldSetting('allowed_values'), $result, $message);
+      $this->assertIdentical($field->getSetting('allowed_values'), $result, $message);
     }
   }
 

@@ -8,14 +8,13 @@
 namespace Drupal\comment\Plugin\views\sort;
 
 use Drupal\views\Plugin\views\sort\Date;
-use Drupal\Component\Annotation\PluginID;
 
 /**
  * Sort handler for the newer of last comment / entity updated.
  *
  * @ingroup views_sort_handlers
  *
- * @PluginID("comment_ces_last_updated")
+ * @ViewsSort("comment_ces_last_updated")
  */
 class StatisticsLastUpdated extends Date {
 

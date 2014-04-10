@@ -7,21 +7,28 @@
 
 namespace Drupal\user\Plugin\views\field;
 
+use Drupal\Core\Session\AccountInterface;
 use Drupal\views\Plugin\views\field\FieldPluginBase;
 use Drupal\views\Plugin\views\display\DisplayPluginBase;
 use Drupal\views\ResultRow;
 use Drupal\views\ViewExecutable;
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\Component\Annotation\PluginID;
 
 /**
  * Field handler to present a link to the user.
  *
  * @ingroup views_field_handlers
  *
- * @PluginID("user_link")
+ * @ViewsField("user_link")
  */
 class Link extends FieldPluginBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function usesGroupBy() {
+    return FALSE;
+  }
 
   /**
    * Overrides Drupal\views\Plugin\views\field\FieldPluginBase::init().
@@ -47,9 +54,11 @@ class Link extends FieldPluginBase {
     parent::buildOptionsForm($form, $form_state);
   }
 
-  // An example of field level access control.
-  public function access() {
-    return user_access('administer users') || user_access('access user profiles');
+  /**
+   * {@inheritdoc}
+   */
+  public function access(AccountInterface $account) {
+    return $account->hasPermission('administer users') || $account->hasPermission('access user profiles');
   }
 
   public function query() {
@@ -80,8 +89,7 @@ class Link extends FieldPluginBase {
     $text = !empty($this->options['text']) ? $this->options['text'] : t('View');
 
     $this->options['alter']['make_link'] = TRUE;
-    $uri = $entity->uri();
-    $this->options['alter']['path'] = $uri['path'];
+    $this->options['alter']['path'] = $entity->getSystemPath();
 
     return $text;
   }

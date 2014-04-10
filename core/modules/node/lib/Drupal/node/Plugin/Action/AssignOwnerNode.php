@@ -7,8 +7,6 @@
 
 namespace Drupal\node\Plugin\Action;
 
-use Drupal\Core\Annotation\Action;
-use Drupal\Core\Annotation\Translation;
 use Drupal\Core\Action\ConfigurableActionBase;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -39,12 +37,12 @@ class AssignOwnerNode extends ConfigurableActionBase implements ContainerFactory
    *   A configuration array containing information about the plugin instance.
    * @param string $plugin_id
    *   The plugin ID for the plugin instance.
-   * @param array $plugin_definition
+   * @param mixed $plugin_definition
    *   The plugin implementation definition.
    * @param \Drupal\Core\Database\Connection $connection
    *   The database connection.
    */
-  public function __construct(array $configuration, $plugin_id, array $plugin_definition, Connection $connection) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, Connection $connection) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
     $this->connection = $connection;
@@ -53,7 +51,7 @@ class AssignOwnerNode extends ConfigurableActionBase implements ContainerFactory
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, array $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static($configuration, $plugin_id, $plugin_definition,
       $container->get('database')
     );

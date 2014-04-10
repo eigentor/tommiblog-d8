@@ -2,30 +2,28 @@
 
 /**
  * @file
- * Definition of Drupal\entity_test\Entity\EntityTestMul.
+ * Contains \Drupal\entity_test\Entity\EntityTestMul.
  */
 
 namespace Drupal\entity_test\Entity;
 
+use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\FieldDefinition;
 use Drupal\entity_test\Entity\EntityTest;
-use Drupal\Core\Entity\Annotation\EntityType;
-use Drupal\Core\Annotation\Translation;
 
 /**
  * Defines the test entity class.
  *
- * @EntityType(
+ * @ContentEntityType(
  *   id = "entity_test_mul",
  *   label = @Translation("Test entity - data table"),
  *   controllers = {
- *     "storage" = "Drupal\entity_test\EntityTestStorageController",
  *     "view_builder" = "Drupal\entity_test\EntityTestViewBuilder",
  *     "access" = "Drupal\entity_test\EntityTestAccessController",
  *     "form" = {
  *       "default" = "Drupal\entity_test\EntityTestFormController"
  *     },
- *     "translation" = "Drupal\content_translation\ContentTranslationController"
+ *     "translation" = "Drupal\content_translation\ContentTranslationHandler"
  *   },
  *   base_table = "entity_test_mul",
  *   data_table = "entity_test_mul_property_data",
@@ -49,7 +47,7 @@ class EntityTestMul extends EntityTest {
   /**
    * {@inheritdoc}
    */
-  public static function baseFieldDefinitions($entity_type) {
+  public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
 
     $fields['default_langcode'] = FieldDefinition::create('boolean')

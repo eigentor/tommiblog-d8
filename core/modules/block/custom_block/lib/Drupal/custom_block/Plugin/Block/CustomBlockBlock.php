@@ -8,10 +8,11 @@
 namespace Drupal\custom_block\Plugin\Block;
 
 use Drupal\block\BlockBase;
-use Drupal\block\Annotation\Block;
-use Drupal\Core\Annotation\Translation;
+use Drupal\Core\Entity\EntityManager;
+use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\block\Plugin\Type\BlockManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -35,11 +36,25 @@ class CustomBlockBlock extends BlockBase implements ContainerFactoryPluginInterf
   protected $blockManager;
 
   /**
+   * The entity manager service.
+   *
+   * @var \Drupal\Core\Entity\EntityManagerInterface
+   */
+  protected $entityManager;
+
+  /**
    * The Module Handler.
    *
    * @var \Drupal\Core\Extension\ModuleHandlerInterface.
    */
   protected $moduleHandler;
+
+  /**
+   * The Drupal account to use for checking for access to block.
+   *
+   * @var \Drupal\Core\Session\AccountInterface.
+   */
+  protected $account;
 
   /**
    * Constructs a new CustomBlockBlock.
@@ -48,30 +63,38 @@ class CustomBlockBlock extends BlockBase implements ContainerFactoryPluginInterf
    *   A configuration array containing information about the plugin instance.
    * @param string $plugin_id
    *   The plugin ID for the plugin instance.
-   * @param array $plugin_definition
+   * @param mixed $plugin_definition
    *   The plugin implementation definition.
    * @param \Drupal\block\Plugin\Type\BlockManager
    *   The Plugin Block Manager.
+   * @param \Drupal\Core\Entity\EntityManagerInterface $entity_manager
+   *   The entity manager service.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface
    *   The Module Handler.
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The account for which view access should be checked.
    */
-  public function __construct(array $configuration, $plugin_id, array $plugin_definition, BlockManager $block_manager, ModuleHandlerInterface $module_handler) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, BlockManager $block_manager, EntityManagerInterface $entity_manager, ModuleHandlerInterface $module_handler, AccountInterface $account) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
     $this->blockManager = $block_manager;
+    $this->entityManager = $entity_manager;
     $this->moduleHandler = $module_handler;
+    $this->account = $account;
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, array $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
       $configuration,
       $plugin_id,
       $plugin_definition,
       $container->get('plugin.manager.block'),
-      $container->get('module_handler')
+      $container->get('entity.manager'),
+      $container->get('module_handler'),
+      $container->get('current_user')
     );
   }
 
@@ -83,6 +106,12 @@ class CustomBlockBlock extends BlockBase implements ContainerFactoryPluginInterf
       'status' => TRUE,
       'info' => '',
       'view_mode' => 'full',
+      // Modify the default max age for custom block blocks: modifications made
+      // to them will automatically invalidate corresponding cache tags, thus
+      // allowing us to cache custom block blocks forever.
+      'cache' => array(
+        'max_age' => \Drupal\Core\Cache\Cache::PERMANENT,
+      ),
     );
   }
 
@@ -92,14 +121,9 @@ class CustomBlockBlock extends BlockBase implements ContainerFactoryPluginInterf
    * Adds body and description fields to the block configuration form.
    */
   public function blockForm($form, &$form_state) {
-    $options = array();
-    $view_modes = entity_get_view_modes('custom_block');
-    foreach ($view_modes as $view_mode => $detail) {
-      $options[$view_mode] = $detail['label'];
-    }
     $form['custom_block']['view_mode'] = array(
       '#type' => 'select',
-      '#options' => $options,
+      '#options' => $this->entityManager->getViewModeOptions('custom_block'),
       '#title' => t('View mode'),
       '#description' => t('Output the block in this view mode.'),
       '#default_value' => $this->configuration['view_mode']
@@ -123,8 +147,7 @@ class CustomBlockBlock extends BlockBase implements ContainerFactoryPluginInterf
    * {@inheritdoc}
    */
   public function build() {
-    // @todo Clean up when http://drupal.org/node/1874498 lands.
-    list(, $uuid) = explode(':', $this->getPluginId());
+    $uuid = $this->getDerivativeId();
     if ($block = entity_load_by_uuid('custom_block', $uuid)) {
       return entity_view($block, $this->configuration['view_mode']);
     }
@@ -134,7 +157,7 @@ class CustomBlockBlock extends BlockBase implements ContainerFactoryPluginInterf
           '%uuid' => $uuid,
           '!url' => url('block/add')
         )),
-        '#access' => user_access('administer blocks')
+        '#access' => $this->account->hasPermission('administer blocks')
       );
     }
   }

@@ -14,7 +14,7 @@ use Drupal\Component\Utility\Settings;
 use Symfony\Component\DependencyInjection\ContainerAware;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-class CacheFactory extends ContainerAware {
+class CacheFactory extends ContainerAware implements CacheFactoryInterface {
 
   /**
    * The settings array.
@@ -50,7 +50,7 @@ class CacheFactory extends ContainerAware {
    */
   public function get($bin) {
     $cache_settings = $this->settings->get('cache');
-    if (isset($cache_settings[$bin])) {
+    if (isset($cache_settings['bins'][$bin])) {
       $service_name = $cache_settings[$bin];
     }
     elseif (isset($cache_settings['default'])) {

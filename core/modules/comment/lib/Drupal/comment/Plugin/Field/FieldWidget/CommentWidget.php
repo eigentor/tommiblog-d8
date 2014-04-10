@@ -7,6 +7,7 @@
 
 namespace Drupal\comment\Plugin\Field\FieldWidget;
 
+use Drupal\comment\Plugin\Field\FieldType\CommentItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 
@@ -31,7 +32,7 @@ class CommentWidget extends WidgetBase {
     $entity = $items->getParent();
 
     // Get default value from the field instance.
-    $field_default_values = $this->fieldDefinition->getFieldDefaultValue($entity);
+    $field_default_values = $this->fieldDefinition->getDefaultValue($entity);
     $status = $items->status;
 
     $element['status'] = array(
@@ -40,27 +41,27 @@ class CommentWidget extends WidgetBase {
       '#title_display' => 'invisible',
       '#default_value' => $status,
       '#options' => array(
-        COMMENT_OPEN => t('Open'),
-        COMMENT_CLOSED => t('Closed'),
-        COMMENT_HIDDEN => t('Hidden'),
+        CommentItemInterface::OPEN => t('Open'),
+        CommentItemInterface::CLOSED => t('Closed'),
+        CommentItemInterface::HIDDEN => t('Hidden'),
       ),
-      COMMENT_OPEN => array(
+      CommentItemInterface::OPEN => array(
         '#description' => t('Users with the "Post comments" permission can post comments.'),
       ),
-      COMMENT_CLOSED => array(
+      CommentItemInterface::CLOSED => array(
         '#description' => t('Users cannot post comments, but existing comments will be displayed.'),
       ),
-      COMMENT_HIDDEN => array(
+      CommentItemInterface::HIDDEN => array(
         '#description' => t('Comments are hidden from view.'),
       ),
     );
     // If the entity doesn't have any comments, the "hidden" option makes no
     // sense, so don't even bother presenting it to the user unless this is the
     // default value widget on the field settings form.
-    if ($element['#field_parents'] != array('default_value_input') && !$entity->get($field->getFieldName())->comment_count) {
-      $element['status'][COMMENT_HIDDEN]['#access'] = FALSE;
+    if ($element['#field_parents'] != array('default_value_input') && !$entity->get($field->getName())->comment_count) {
+      $element['status'][CommentItemInterface::HIDDEN]['#access'] = FALSE;
       // Also adjust the description of the "closed" option.
-      $element['status'][COMMENT_CLOSED]['#description'] = t('Users cannot post comments.');
+      $element['status'][CommentItemInterface::CLOSED]['#description'] = t('Users cannot post comments.');
     }
     // If the advanced settings tabs-set is available (normally rendered in the
     // second column on wide-resolutions), place the field as a details element
@@ -68,15 +69,15 @@ class CommentWidget extends WidgetBase {
     if (isset($form['advanced'])) {
       $element += array(
         '#type' => 'details',
-        // Collapse this field when the selected value is the same as stored in
+        // Open the details when the selected value is different to the stored
         // default values for the field instance.
-        '#collapsed' => ($items->status == $field_default_values[0]['status']),
+        '#open' => ($items->status != $field_default_values[0]['status']),
         '#group' => 'advanced',
         '#attributes' => array(
           'class' => array('comment-' . drupal_html_class($element['#entity_type']) . '-settings-form'),
         ),
         '#attached' => array(
-          'library' => array('comment', 'drupal.comment'),
+          'library' => array('comment/drupal.comment'),
         ),
       );
     }

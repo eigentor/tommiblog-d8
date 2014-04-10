@@ -16,9 +16,9 @@
   }
 
   function installStepsSetup () {
-    var steps = document.querySelectorAll('.install-task-list li');
+    var steps = document.querySelectorAll('.task-list li');
     if (steps.length) {
-      var header = document.querySelector('#header');
+      var header = document.querySelector('header[role="banner"]');
       var stepIndicator = document.createElement('div');
       stepIndicator.className = 'step-indicator';
       stepIndicator.innerHTML = findActiveStep(steps) + '/' + steps.length;

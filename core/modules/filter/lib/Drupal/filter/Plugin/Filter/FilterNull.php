@@ -7,8 +7,6 @@
 
 namespace Drupal\filter\Plugin\Filter;
 
-use Drupal\filter\Annotation\Filter;
-use Drupal\Core\Annotation\Translation;
 use Drupal\filter\Plugin\FilterBase;
 
 /**
@@ -20,9 +18,8 @@ use Drupal\filter\Plugin\FilterBase;
  *
  * @Filter(
  *   id = "filter_null",
- *   module = "filter",
  *   title = @Translation("Provides a fallback for missing filters. Do not use."),
- *   type = FILTER_TYPE_HTML_RESTRICTOR,
+ *   type = Drupal\filter\Plugin\FilterInterface::TYPE_HTML_RESTRICTOR,
  *   weight = -10
  * )
  */
@@ -38,7 +35,7 @@ class FilterNull extends FilterBase {
   /**
    * {@inheritdoc}
    */
-  public function __construct(array $configuration, $plugin_id, array $plugin_definition) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition) {
     // Once per filter, log that a filter plugin was missing.
     if (!$this->logged) {
       $this->logged = TRUE;
@@ -66,7 +63,7 @@ class FilterNull extends FilterBase {
    * {@inheritdoc}
    */
   public function tips($long = FALSE) {
-    return t('Missing filter. All text is removed');
+    return $this->t('Missing filter. All text is removed');
   }
 
 }

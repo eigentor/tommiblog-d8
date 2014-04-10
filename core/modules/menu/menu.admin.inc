@@ -5,6 +5,8 @@
  * Administrative page callbacks for menu module.
  */
 
+use Drupal\Core\Render\Element;
+
 /**
  * Returns HTML for the menu overview form into a table.
  *
@@ -17,9 +19,6 @@
 function theme_menu_overview_form($variables) {
   $form = $variables['form'];
 
-  drupal_add_tabledrag('menu-overview', 'match', 'parent', 'menu-plid', 'menu-plid', 'menu-mlid', TRUE, MENU_MAX_DEPTH - 1);
-  drupal_add_tabledrag('menu-overview', 'order', 'sibling', 'menu-weight');
-
   $header = array(
     t('Menu link'),
     array('data' => t('Enabled'), 'class' => array('checkbox')),
@@ -28,7 +27,7 @@ function theme_menu_overview_form($variables) {
   );
 
   $rows = array();
-  foreach (element_children($form) as $mlid) {
+  foreach (Element::children($form) as $mlid) {
     if (isset($form[$mlid]['hidden'])) {
       $element = &$form[$mlid];
 
@@ -62,11 +61,27 @@ function theme_menu_overview_form($variables) {
   }
 
   $table = array(
-    '#theme' => 'table',
+    '#type' => 'table',
     '#header' => $header,
     '#rows' => $rows,
     '#attributes' => array(
       'id' => 'menu-overview',
+    ),
+    '#tabledrag' => array(
+      array(
+        'action' => 'match',
+        'relationship' => 'parent',
+        'group' => 'menu-plid',
+        'subgroup' => 'menu-plid',
+        'source' => 'menu-mlid',
+        'hidden' => TRUE,
+        'limit' => MENU_MAX_DEPTH - 1,
+      ),
+      array(
+        'action' => 'order',
+        'relationship' => 'sibling',
+        'group' => 'menu-weight',
+      ),
     ),
   );
 

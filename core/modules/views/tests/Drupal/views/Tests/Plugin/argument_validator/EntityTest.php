@@ -37,7 +37,7 @@ class EntityTest extends UnitTestCase {
   /**
    * The entity manager.
    *
-   * @var \PHPUnit_Framework_MockObject_MockObject|\Drupal\Core\Entity\EntityManager
+   * @var \PHPUnit_Framework_MockObject_MockObject|\Drupal\Core\Entity\EntityManagerInterface
    */
   protected $entityManager;
 
@@ -62,9 +62,7 @@ class EntityTest extends UnitTestCase {
   protected function setUp() {
     parent::setUp();
 
-    $this->entityManager = $this->getMockBuilder('Drupal\Core\Entity\EntityManager')
-      ->disableOriginalConstructor()
-      ->getMock();
+    $this->entityManager = $this->getMock('Drupal\Core\Entity\EntityManagerInterface');
 
     $mock_entity = $this->getMockBuilder('Drupal\Core\Entity\Entity')
       ->disableOriginalConstructor()
@@ -95,7 +93,7 @@ class EntityTest extends UnitTestCase {
       )));
 
 
-    $storage_controller = $this->getMock('Drupal\Core\Entity\EntityStorageControllerInterface');
+    $storage = $this->getMock('Drupal\Core\Entity\EntityStorageInterface');
 
     // Setup values for IDs passed as strings or numbers.
     $value_map = array(
@@ -107,13 +105,13 @@ class EntityTest extends UnitTestCase {
       array(array(2), array(2 => $mock_entity_bundle_2)),
       array(array('2'), array(2 => $mock_entity_bundle_2)),
     );
-    $storage_controller->expects($this->any())
+    $storage->expects($this->any())
       ->method('loadMultiple')
       ->will($this->returnValueMap($value_map));
 
     $this->entityManager->expects($this->any())
-      ->method('getStorageController')
-      ->will($this->returnValue($storage_controller));
+      ->method('getStorage')
+      ->will($this->returnValue($storage));
 
     $this->executable = $this->getMockBuilder('Drupal\views\ViewExecutable')
       ->disableOriginalConstructor()

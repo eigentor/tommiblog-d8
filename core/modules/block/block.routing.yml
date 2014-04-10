@@ -5,6 +5,8 @@ block.admin_demo:
   requirements:
     _access_theme: 'TRUE'
     _permission: 'administer blocks'
+  options:
+    _admin_route: FALSE
 
 block.admin_block_delete:
   path: '/admin/structure/block/manage/{block}/delete'
@@ -32,7 +34,8 @@ block.admin_display:
 block.admin_display_theme:
   path: 'admin/structure/block/list/{theme}'
   defaults:
-    _controller: '\Drupal\block\Controller\BlockListController::listing'
+    _content: '\Drupal\block\Controller\BlockListController::listing'
+    _title: 'Block layout'
   requirements:
     _access_theme: 'TRUE'
     _permission: 'administer blocks'

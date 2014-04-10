@@ -7,8 +7,7 @@
 
 namespace Drupal\node\Plugin\Action;
 
-use Drupal\Core\Annotation\Action;
-use Drupal\Core\Annotation\Translation;
+use Drupal\Component\Utility\Tags;
 use Drupal\Core\Action\ConfigurableActionBase;
 
 /**
@@ -53,7 +52,7 @@ class UnpublishByKeywordNode extends ConfigurableActionBase {
       '#title' => t('Keywords'),
       '#type' => 'textarea',
       '#description' => t('The content will be unpublished if it contains any of the phrases above. Use a case-sensitive, comma-separated list of phrases. Example: funny, bungee jumping, "Company, Inc."'),
-      '#default_value' => drupal_implode_tags($this->configuration['keywords']),
+      '#default_value' => Tags::implode($this->configuration['keywords']),
     );
     return $form;
   }
@@ -62,7 +61,7 @@ class UnpublishByKeywordNode extends ConfigurableActionBase {
    * {@inheritdoc}
    */
   public function submitConfigurationForm(array &$form, array &$form_state) {
-    $this->configuration['keywords'] = drupal_explode_tags($form_state['values']['keywords']);
+    $this->configuration['keywords'] = Tags::explode($form_state['values']['keywords']);
   }
 
 }

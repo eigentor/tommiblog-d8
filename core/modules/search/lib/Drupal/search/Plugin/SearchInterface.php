@@ -72,10 +72,12 @@ interface SearchInterface extends PluginInspectionInterface {
   public function execute();
 
   /**
-   * Executes the search and builds a render array.
+   * Executes the search and builds render arrays for the result items.
    *
    * @return array
-   *   The search results in a renderable array.
+   *   An array of render arrays of search result items (generally each item
+   *   has '#theme' set to 'search_result'), or an empty array if there are no
+   *   results.
    */
   public function buildResults();
 
@@ -91,8 +93,8 @@ interface SearchInterface extends PluginInspectionInterface {
    *   Nested array of form elements that comprise the form.
    * @param array $form_state
    *   A keyed array containing the current state of the form. The arguments
-   *   that drupal_get_form() was originally called with are available in the
-   *   array $form_state['build_info']['args'].
+   *   that \Drupal::formBuilder()->getForm() was originally called with are
+   *   available in the array $form_state['build_info']['args'].
    */
   public function searchFormAlter(array &$form, array &$form_state);
 

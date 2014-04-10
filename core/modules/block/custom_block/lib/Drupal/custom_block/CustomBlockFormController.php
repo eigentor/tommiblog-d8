@@ -7,14 +7,60 @@
 
 namespace Drupal\custom_block;
 
-use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\Entity\ContentEntityFormController;
+use Drupal\Core\Entity\EntityManagerInterface;
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Language\Language;
+use Drupal\Core\Language\LanguageManager;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Form controller for the custom block edit forms.
  */
 class CustomBlockFormController extends ContentEntityFormController {
+
+  /**
+   * The custom block storage.
+   *
+   * @var \Drupal\Core\Entity\EntityStorageInterface
+   */
+  protected $customBlockStorage;
+
+  /**
+   * The language manager.
+   *
+   * @var \Drupal\Core\Language\LanguageManager
+   */
+  protected $languageManager;
+
+  /**
+   * Constructs a CustomBlockFormController object.
+   *
+   * @param \Drupal\Core\Entity\EntityManagerInterface $entity_manager
+   *   The entity manager.
+   * @param \Drupal\Core\Entity\EntityStorageInterface $custom_block_storage
+   *   The custom block storage.
+   * @param \Drupal\Core\Language\LanguageManager $language_manager
+   *   The language manager.
+   */
+  public function __construct(EntityManagerInterface $entity_manager, EntityStorageInterface $custom_block_storage, LanguageManager $language_manager) {
+    parent::__construct($entity_manager);
+    $this->customBlockStorage = $custom_block_storage;
+    $this->languageManager = $language_manager;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    $entity_manager = $container->get('entity.manager');
+    return new static(
+      $entity_manager,
+      $entity_manager->getStorage('custom_block'),
+      $container->get('language_manager')
+    );
+  }
 
   /**
    * Overrides \Drupal\Core\Entity\EntityFormController::prepareEntity().
@@ -27,20 +73,20 @@ class CustomBlockFormController extends ContentEntityFormController {
   protected function prepareEntity() {
     $block = $this->entity;
     // Set up default values, if required.
-    $block_type = entity_load('custom_block_type', $block->type->value);
-    // If this is a new custom block, fill in the default values.
-    if (isset($block->id->value)) {
-      $block->set('log', NULL);
+    $block_type = entity_load('custom_block_type', $block->bundle());
+    if (!$block->isNew()) {
+      $block->setRevisionLog(NULL);
     }
     // Always use the default revision setting.
     $block->setNewRevision($block_type->revision);
   }
 
   /**
-   * Overrides \Drupal\Core\Entity\EntityFormController::form().
+   * {@inheritdoc}
    */
   public function form(array $form, array &$form_state) {
     $block = $this->entity;
+    $account = $this->currentUser();
 
     if ($this->operation == 'edit') {
       $form['#title'] = $this->t('Edit custom block %label', array('%label' => $block->label()));
@@ -48,38 +94,22 @@ class CustomBlockFormController extends ContentEntityFormController {
     // Override the default CSS class name, since the user-defined custom block
     // type name in 'TYPE-block-form' potentially clashes with third-party class
     // names.
-    $form['#attributes']['class'][0] = drupal_html_class('block-' . $block->type->value . '-form');
+    $form['#attributes']['class'][0] = drupal_html_class('block-' . $block->bundle() . '-form');
 
-    // Basic block information.
-    // These elements are just values so they are not even sent to the client.
-    foreach (array('revision_id', 'id') as $key) {
-      $form[$key] = array(
-        '#type' => 'value',
-        '#value' => $block->$key->value,
-      );
-    }
+    if ($this->moduleHandler->moduleExists('language')) {
+      $language_configuration = language_get_default_configuration('custom_block', $block->bundle());
 
-    $form['info'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Block description'),
-      '#required' => TRUE,
-      '#default_value' => $block->info->value,
-      '#weight' => -5,
-      '#description' => t('A brief description of your block. Used on the <a href="@overview">Blocks administration page</a>.', array('@overview' => url('admin/structure/block'))),
-    );
-
-    $language_configuration = module_invoke('language', 'get_default_configuration', 'custom_block', $block->type->value);
-
-    // Set the correct default language.
-    if ($block->isNew() && !empty($language_configuration['langcode'])) {
-      $language_default = language($language_configuration['langcode']);
-      $block->langcode->value = $language_default->id;
+      // Set the correct default language.
+      if ($block->isNew()) {
+        $language_default = $this->languageManager->getCurrentLanguage($language_configuration['langcode']);
+        $block->langcode->value = $language_default->id;
+      }
     }
 
     $form['langcode'] = array(
-      '#title' => t('Language'),
+      '#title' => $this->t('Language'),
       '#type' => 'language_select',
-      '#default_value' => $block->langcode->value,
+      '#default_value' => $block->getUntranslated()->language()->id,
       '#languages' => Language::STATE_ALL,
       '#access' => isset($language_configuration['language_show']) && $language_configuration['language_show'],
     );
@@ -93,26 +123,25 @@ class CustomBlockFormController extends ContentEntityFormController {
     // current user has the ability to check that option.
     $form['revision_information'] = array(
       '#type' => 'details',
-      '#title' => t('Revision information'),
-      '#collapsible' => TRUE,
-      // Collapsed by default when "Create new revision" is unchecked.
-      '#collapsed' => !$block->isNewRevision(),
+      '#title' => $this->t('Revision information'),
+      // Open by default when "Create new revision" is checked.
+      '#open' => $block->isNewRevision(),
       '#group' => 'advanced',
       '#attributes' => array(
         'class' => array('custom-block-form-revision-information'),
       ),
       '#attached' => array(
-        'js' => array(drupal_get_path('module', 'custom_block') . '/custom_block.js'),
+        'library' => array('custom_block/drupal.custom_block'),
       ),
       '#weight' => 20,
-      '#access' => $block->isNewRevision() || user_access('administer blocks'),
+      '#access' => $block->isNewRevision() || $account->hasPermission('administer blocks'),
     );
 
     $form['revision_information']['revision'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Create new revision'),
+      '#title' => $this->t('Create new revision'),
       '#default_value' => $block->isNewRevision(),
-      '#access' => user_access('administer blocks'),
+      '#access' => $account->hasPermission('administer blocks'),
     );
 
     // Check the revision log checkbox when the log textarea is filled in.
@@ -128,10 +157,10 @@ class CustomBlockFormController extends ContentEntityFormController {
 
     $form['revision_information']['log'] = array(
       '#type' => 'textarea',
-      '#title' => t('Revision log message'),
+      '#title' => $this->t('Revision log message'),
       '#rows' => 4,
-      '#default_value' => $block->log->value,
-      '#description' => t('Briefly describe the changes you have made.'),
+      '#default_value' => $block->getRevisionLog(),
+      '#description' => $this->t('Briefly desribe the changes you have made.'),
     );
 
     return parent::form($form, $form_state, $block);
@@ -159,28 +188,28 @@ class CustomBlockFormController extends ContentEntityFormController {
   }
 
   /**
-   * Overrides \Drupal\Core\Entity\EntityFormController::save().
+   * {@inheritdoc}
    */
   public function save(array $form, array &$form_state) {
     $block = $this->entity;
-    $insert = empty($block->id->value);
+    $insert = $block->isNew();
     $block->save();
     $watchdog_args = array('@type' => $block->bundle(), '%info' => $block->label());
-    $block_type = entity_load('custom_block_type', $block->type->value);
+    $block_type = entity_load('custom_block_type', $block->bundle());
     $t_args = array('@type' => $block_type->label(), '%info' => $block->label());
 
     if ($insert) {
       watchdog('content', '@type: added %info.', $watchdog_args, WATCHDOG_NOTICE);
-      drupal_set_message(t('@type %info has been created.', $t_args));
+      drupal_set_message($this->t('@type %info has been created.', $t_args));
     }
     else {
       watchdog('content', '@type: updated %info.', $watchdog_args, WATCHDOG_NOTICE);
-      drupal_set_message(t('@type %info has been updated.', $t_args));
+      drupal_set_message($this->t('@type %info has been updated.', $t_args));
     }
 
-    if ($block->id->value) {
-      $form_state['values']['id'] = $block->id->value;
-      $form_state['id'] = $block->id->value;
+    if ($block->id()) {
+      $form_state['values']['id'] = $block->id();
+      $form_state['id'] = $block->id();
       if ($insert) {
         if (!$theme = $block->getTheme()) {
           $theme = $this->config('system.theme')->get('default');
@@ -200,33 +229,12 @@ class CustomBlockFormController extends ContentEntityFormController {
     else {
       // In the unlikely case something went wrong on save, the block will be
       // rebuilt and block form redisplayed.
-      drupal_set_message(t('The block could not be saved.'), 'error');
+      drupal_set_message($this->t('The block could not be saved.'), 'error');
       $form_state['rebuild'] = TRUE;
     }
 
     // Clear the page and block caches.
-    cache_invalidate_tags(array('content' => TRUE));
-  }
-
-  /**
-   * Overrides \Drupal\Core\Entity\EntityFormController::delete().
-   */
-  public function delete(array $form, array &$form_state) {
-    $destination = array();
-    $query = \Drupal::request()->query;
-    if (!is_null($query->get('destination'))) {
-      $destination = drupal_get_destination();
-      $query->remove('destination');
-    }
-    $form_state['redirect_route'] = array(
-      'route_name' => 'custom_block.delete',
-      'route_parameters' => array(
-        'custom_block' => $this->entity->id(),
-      ),
-      'options' => array(
-        'query' => $destination,
-      ),
-    );
+    Cache::invalidateTags(array('content' => TRUE));
   }
 
   /**
@@ -234,12 +242,11 @@ class CustomBlockFormController extends ContentEntityFormController {
    */
   public function validateForm(array &$form, array &$form_state) {
     if ($this->entity->isNew()) {
-      // @todo Inject this once https://drupal.org/node/2060865 is in.
-      $exists = \Drupal::entityManager()->getStorageController('custom_block')->loadByProperties(array('info' => $form_state['values']['info']));
+      $exists = $this->customBlockStorage->loadByProperties(array('info' => $form_state['values']['info']));
       if (!empty($exists)) {
-        form_set_error('info', $form_state, t('A block with description %name already exists.', array(
-        '%name' => $form_state['values']['info']
-      )));
+        $this->setFormError('info', $form_state, $this->t('A block with description %name already exists.', array(
+          '%name' => $form_state['values']['info'][0]['value'],
+        )));
       }
     }
   }

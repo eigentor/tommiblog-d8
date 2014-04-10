@@ -7,8 +7,6 @@
 
 namespace Drupal\node\Plugin\Action;
 
-use Drupal\Core\Annotation\Action;
-use Drupal\Core\Annotation\Translation;
 use Drupal\Core\Action\ActionBase;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\user\TempStoreFactory;
@@ -40,12 +38,12 @@ class DeleteNode extends ActionBase implements ContainerFactoryPluginInterface {
    *   A configuration array containing information about the plugin instance.
    * @param string $plugin_id
    *   The plugin ID for the plugin instance.
-   * @param array $plugin_definition
+   * @param mixed $plugin_definition
    *   The plugin implementation definition.
    * @param \Drupal\user\TempStoreFactory $temp_store_factory
    *   The tempstore factory.
    */
-  public function __construct(array $configuration, $plugin_id, array $plugin_definition, TempStoreFactory $temp_store_factory) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, TempStoreFactory $temp_store_factory) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
     $this->tempStore = $temp_store_factory->get('node_multiple_delete_confirm');
@@ -54,7 +52,7 @@ class DeleteNode extends ActionBase implements ContainerFactoryPluginInterface {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, array $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static($configuration, $plugin_id, $plugin_definition, $container->get('user.tempstore'));
   }
 
@@ -62,7 +60,7 @@ class DeleteNode extends ActionBase implements ContainerFactoryPluginInterface {
    * {@inheritdoc}
    */
   public function executeMultiple(array $entities) {
-    $this->tempStore->set($GLOBALS['user']->id(), $entities);
+    $this->tempStore->set(\Drupal::currentUser()->id(), $entities);
   }
 
   /**

@@ -7,8 +7,6 @@
 
 namespace Drupal\block_test\Plugin\Block;
 
-use Drupal\block\Annotation\Block;
-
 /**
  * Provides a block to test XSS in title.
  *
@@ -18,16 +16,4 @@ use Drupal\block\Annotation\Block;
  * )
  */
 class TestXSSTitleBlock extends TestCacheBlock {
-
-  /**
-   * {@inheritdoc}
-   *
-   * Sets a different caching strategy for testing purposes.
-   */
-  public function defaultConfiguration() {
-    return array(
-      'cache' => DRUPAL_NO_CACHE,
-    );
-  }
-
 }

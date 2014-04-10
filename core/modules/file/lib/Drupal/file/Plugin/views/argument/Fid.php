@@ -7,7 +7,6 @@
 
 namespace Drupal\file\Plugin\views\argument;
 
-use Drupal\Component\Annotation\PluginID;
 use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\Core\Entity\Query\QueryFactory;
 use Drupal\views\Plugin\views\argument\Numeric;
@@ -20,7 +19,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @ingroup views_argument_handlers
  *
- * @PluginID("file_fid")
+ * @ViewsArgument("file_fid")
  */
 class Fid extends Numeric implements ContainerFactoryPluginInterface {
 
@@ -45,14 +44,14 @@ class Fid extends Numeric implements ContainerFactoryPluginInterface {
    *   A configuration array containing information about the plugin instance.
    * @param string $plugin_id
    *   The plugin_id for the plugin instance.
-   * @param array $plugin_definition
+   * @param mixed $plugin_definition
    *   The plugin implementation definition.
    * @param \Drupal\Core\Entity\EntityManagerInterface $entity_manager
    *   The entity manager.
    * @param \Drupal\Core\Entity\Query\QueryFactory
    *   The entity query factory.
    */
-  public function __construct(array $configuration, $plugin_id, array $plugin_definition, EntityManagerInterface $entity_manager, QueryFactory $entity_query) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityManagerInterface $entity_manager, QueryFactory $entity_query) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->entityManager = $entity_manager;
     $this->entityQuery = $entity_query;
@@ -61,7 +60,7 @@ class Fid extends Numeric implements ContainerFactoryPluginInterface {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, array $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
       $configuration,
       $plugin_id,
@@ -78,7 +77,7 @@ class Fid extends Numeric implements ContainerFactoryPluginInterface {
     $fids = $this->entityQuery->get('file')
       ->condition('fid', $this->value)
       ->execute();
-    $controller = $this->entityManager->getStorageController('file');
+    $controller = $this->entityManager->getStorage('file');
     $files = $controller->loadMultiple($fids);
     $titles = array();
     foreach ($files as $file) {

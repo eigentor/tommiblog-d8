@@ -7,9 +7,12 @@
 
 namespace Drupal\views;
 
+use Drupal\Core\DependencyInjection\DependencySerialization;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\views\Plugin\views\query\QueryPluginBase;
 use Drupal\views\ViewStorageInterface;
 use Drupal\Component\Utility\Tags;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -23,7 +26,7 @@ use Symfony\Component\HttpFoundation\Response;
  * An object to contain all of the data to generate a view, plus the member
  * functions to build the view query, execute the query and render the output.
  */
-class ViewExecutable {
+class ViewExecutable extends DependencySerialization {
 
   /**
    * The config entity in which the view is stored.
@@ -76,7 +79,7 @@ class ViewExecutable {
    *
    * The array must use a numeric index starting at 0.
    *
-   * @var array
+   * @var \Drupal\views\ResultRow[]
    */
   public $result = array();
 
@@ -329,9 +332,16 @@ class ViewExecutable {
   /**
    * Stores the current response object.
    *
-   * @var Symfony\Component\HttpFoundation\Response
+   * @var \Symfony\Component\HttpFoundation\Response
    */
   protected $response = NULL;
+
+  /**
+   * Stores the current request object.
+   *
+   * @var \Symfony\Component\HttpFoundation\Request
+   */
+  protected $request;
 
   /**
    * Does this view already have loaded it's handlers.
@@ -407,6 +417,13 @@ class ViewExecutable {
   );
 
   /**
+   * The current user.
+   *
+   * @var \Drupal\Core\Session\AccountInterface
+   */
+  protected $user;
+
+  /**
    * Should the admin links be shown on the rendered view.
    *
    * @var bool
@@ -418,14 +435,17 @@ class ViewExecutable {
    *
    * @param \Drupal\views\ViewStorageInterface $storage
    *   The view config entity the actual information is stored on.
+   * @param \Drupal\Core\Session\AccountInterface $user
+   *   The current user.
    */
-  public function __construct(ViewStorageInterface $storage) {
+  public function __construct(ViewStorageInterface $storage, AccountInterface $user) {
     // Reference the storage and the executable to each other.
     $this->storage = $storage;
     $this->storage->set('executable', $this);
+    $this->user = $user;
 
     // Add the default css for a view.
-    $this->element['#attached']['library'][] = array('views', 'views.module');
+    $this->element['#attached']['library'][] = 'views/views.module';
   }
 
   /**
@@ -627,7 +647,7 @@ class ViewExecutable {
     $this->initDisplay();
 
     foreach ($displays as $display_id) {
-      if ($this->displayHandlers->get($display_id)->access()) {
+      if ($this->displayHandlers->get($display_id)->access($this->user)) {
         return $display_id;
       }
     }
@@ -766,7 +786,7 @@ class ViewExecutable {
   public function initHandlers() {
     $this->initDisplay();
     if (empty($this->inited)) {
-      foreach ($this::viewsHandlerTypes() as $key => $info) {
+      foreach ($this::getHandlerTypes() as $key => $info) {
         $this->_initHandler($key, $info);
       }
       $this->inited = TRUE;
@@ -843,7 +863,7 @@ class ViewExecutable {
    * Run the preQuery() on all active handlers.
    */
   protected function _preQuery() {
-    foreach ($this::viewsHandlerTypes() as $key => $info) {
+    foreach ($this::getHandlerTypes() as $key => $info) {
       $handlers = &$this->$key;
       $position = 0;
       foreach ($handlers as $id => $handler) {
@@ -858,7 +878,7 @@ class ViewExecutable {
    * Run the postExecute() on all active handlers.
    */
   protected function _postExecute() {
-    foreach ($this::viewsHandlerTypes() as $key => $info) {
+    foreach ($this::getHandlerTypes() as $key => $info) {
       $handlers = &$this->$key;
       foreach ($handlers as $id => $handler) {
         $handlers[$id]->postExecute($this->result);
@@ -872,7 +892,7 @@ class ViewExecutable {
    * @param $key
    *   One of 'argument', 'field', 'sort', 'filter', 'relationship'
    * @param $info
-   *   The $info from viewsHandlerTypes for this object.
+   *   The $info from getHandlerTypes for this object.
    */
   protected function _initHandler($key, $info) {
     // Load the requested items from the display onto the object.
@@ -883,7 +903,7 @@ class ViewExecutable {
 
     // Run through and test for accessibility.
     foreach ($handlers as $id => $handler) {
-      if (!$handler->access()) {
+      if (!$handler->access($this->user)) {
         unset($handlers[$id]);
       }
     }
@@ -1278,8 +1298,6 @@ class ViewExecutable {
       return;
     }
 
-    drupal_theme_initialize();
-
     $exposed_form = $this->display_handler->getPlugin('exposed_form');
     $exposed_form->preRender($this->result);
 
@@ -1341,11 +1359,13 @@ class ViewExecutable {
       $module_handler->invokeAll('views_pre_render', array($this));
 
       // Let the themes play too, because pre render is a very themey thing.
-      foreach ($GLOBALS['base_theme_info'] as $base) {
-        $module_handler->invoke($base, 'views_pre_render', array($this));
-      }
+      if (isset($GLOBALS['base_theme_info']) && isset($GLOBALS['theme'])) {
+        foreach ($GLOBALS['base_theme_info'] as $base) {
+          $module_handler->invoke($base->getName(), 'views_pre_render', array($this));
+        }
 
-      $module_handler->invoke($GLOBALS['theme'], 'views_pre_render', array($this));
+        $module_handler->invoke($GLOBALS['theme'], 'views_pre_render', array($this));
+      }
 
       $this->display_handler->output = $this->display_handler->render();
       if ($cache) {
@@ -1363,11 +1383,13 @@ class ViewExecutable {
     $module_handler->invokeAll('views_post_render', array($this, &$this->display_handler->output, $cache));
 
     // Let the themes play too, because post render is a very themey thing.
-    foreach ($GLOBALS['base_theme_info'] as $base) {
-      $module_handler->invoke($base, 'views_post_render', array($this));
-    }
+    if (isset($GLOBALS['base_theme_info']) && isset($GLOBALS['theme'])) {
+      foreach ($GLOBALS['base_theme_info'] as $base) {
+        $module_handler->invoke($base->getName(), 'views_post_render', array($this));
+      }
 
-    $module_handler->invoke($GLOBALS['theme'], 'views_post_render', array($this));
+      $module_handler->invoke($GLOBALS['theme'], 'views_post_render', array($this));
+    }
 
     return $this->display_handler->output;
   }
@@ -1483,31 +1505,33 @@ class ViewExecutable {
     // Find out which other displays attach to the current one.
     foreach ($this->display_handler->getAttachedDisplays() as $id) {
       // Create a clone for the attachments to manipulate. 'static' refers to the current class name.
-      $cloned_view = new static($this->storage);
+      $cloned_view = new static($this->storage, $this->user);
       $this->displayHandlers->get($id)->attachTo($cloned_view, $this->current_display);
     }
     $this->is_attachment = FALSE;
   }
 
   /**
-   * Called to get hook_menu() information from the view and the named display handler.
+   * Returns default menu links from the view and the named display handler.
    *
-   * @param $display_id
-   *   A display id.
-   * @param $callbacks
-   *   A menu callback array passed from views_menu_alter().
+   * @param string $display_id
+   *   A display ID.
+   * @param array $links
+   *   An array of default menu link items passed from
+   *   views_menu_link_defaults_alter().
+   *
+   * @return array|bool
    */
-  public function executeHookMenu($display_id = NULL, &$callbacks = array()) {
-    // Prepare the view with the information we have.
-
-    // This was probably already called, but it's good to be safe.
+  public function executeHookMenuLinkDefaults($display_id = NULL, &$links = array()) {
+    // Prepare the view with the information we have. This was probably already
+    // called, but it's good to be safe.
     if (!$this->setDisplay($display_id)) {
       return FALSE;
     }
 
-    // Execute the view
+    // Execute the hook.
     if (isset($this->display_handler)) {
-      return $this->display_handler->executeHookMenu($callbacks);
+      return $this->display_handler->executeHookMenuLinkDefaults($links);
     }
   }
 
@@ -1526,7 +1550,7 @@ class ViewExecutable {
     }
 
     if (!$account) {
-      $account = \Drupal::currentUser();
+      $account = $this->user;
     }
 
     // We can't use choose_display() here because that function
@@ -1556,7 +1580,7 @@ class ViewExecutable {
   /**
    * Gets the response object used by the view.
    *
-   * @return Symfony\Component\HttpFoundation\Response
+   * @return \Symfony\Component\HttpFoundation\Response
    *   The response object of the view.
    */
   public function getResponse() {
@@ -1564,6 +1588,26 @@ class ViewExecutable {
       $this->response = new Response();
     }
     return $this->response;
+  }
+
+  /**
+   * Sets the request object.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The request object.
+   */
+  public function setRequest(Request $request) {
+    $this->request = $request;
+  }
+
+  /**
+   * Gets the request object.
+   *
+   * @return \Symfony\Component\HttpFoundation\Request $request
+   *   Returns the request object.
+   */
+  public function getRequest() {
+    return $this->request;
   }
 
   /**
@@ -1700,6 +1744,18 @@ class ViewExecutable {
   }
 
   /**
+   * Gets the current user.
+   *
+   * Views plugins can recieve the current user in order to not need dependency
+   * injection.
+   *
+   * @return \Drupal\Core\Session\AccountInterface
+   */
+  public function getUser() {
+    return $this->user;
+  }
+
+  /**
    * Creates a duplicate ViewExecutable object.
    *
    * Makes a copy of this view that has been sanitized of handlers, any runtime
@@ -1714,7 +1770,7 @@ class ViewExecutable {
    * collected.
    */
   public function destroy() {
-    foreach ($this::viewsHandlerTypes() as $type => $info) {
+    foreach ($this::getHandlerTypes() as $type => $info) {
       if (isset($this->$type)) {
         foreach ($this->{$type} as $handler) {
           $handler->destroy();
@@ -1728,9 +1784,10 @@ class ViewExecutable {
 
     $reflection = new \ReflectionClass($this);
     $defaults = $reflection->getDefaultProperties();
-    // The storage should not be reset. This is not generated by the execution
-    // of a view.
+    // The external dependencies should not be reset. This is not generated by
+    // the execution of a view.
     unset($defaults['storage']);
+    unset($defaults['user']);
     foreach ($defaults as $property => $default) {
       $this->{$property} = $default;
     }
@@ -1781,75 +1838,8 @@ class ViewExecutable {
    *   - (optional) type: The actual internal used handler type. This key is
    *     just used for header,footer,empty to link to the internal type: area.
    */
-  public static function viewsHandlerTypes() {
-    static $retval = NULL;
-
-    // Statically cache this so t() doesn't run a bajillion times.
-    if (!isset($retval)) {
-      $retval = array(
-        'field' => array(
-          'title' => t('Fields'), // title
-          'ltitle' => t('fields'), // lowercase title for mid-sentence
-          'stitle' => t('Field'), // singular title
-          'lstitle' => t('field'), // singular lowercase title for mid sentence
-          'plural' => 'fields',
-        ),
-        'argument' => array(
-          'title' => t('Contextual filters'),
-          'ltitle' => t('contextual filters'),
-          'stitle' => t('Contextual filter'),
-          'lstitle' => t('contextual filter'),
-          'plural' => 'arguments',
-        ),
-        'sort' => array(
-          'title' => t('Sort criteria'),
-          'ltitle' => t('sort criteria'),
-          'stitle' => t('Sort criterion'),
-          'lstitle' => t('sort criterion'),
-          'plural' => 'sorts',
-        ),
-        'filter' => array(
-          'title' => t('Filter criteria'),
-          'ltitle' => t('filter criteria'),
-          'stitle' => t('Filter criterion'),
-          'lstitle' => t('filter criterion'),
-          'plural' => 'filters',
-        ),
-        'relationship' => array(
-          'title' => t('Relationships'),
-          'ltitle' => t('relationships'),
-          'stitle' => t('Relationship'),
-          'lstitle' => t('Relationship'),
-          'plural' => 'relationships',
-        ),
-        'header' => array(
-          'title' => t('Header'),
-          'ltitle' => t('header'),
-          'stitle' => t('Header'),
-          'lstitle' => t('Header'),
-          'plural' => 'header',
-          'type' => 'area',
-        ),
-        'footer' => array(
-          'title' => t('Footer'),
-          'ltitle' => t('footer'),
-          'stitle' => t('Footer'),
-          'lstitle' => t('Footer'),
-          'plural' => 'footer',
-          'type' => 'area',
-        ),
-        'empty' => array(
-          'title' => t('No results behavior'),
-          'ltitle' => t('no results behavior'),
-          'stitle' => t('No results behavior'),
-          'lstitle' => t('No results behavior'),
-          'plural' => 'empty',
-          'type' => 'area',
-        ),
-      );
-    }
-
-    return $retval;
+  public static function getHandlerTypes() {
+    return Views::getHandlerTypes();
   }
 
   /**
@@ -1858,28 +1848,8 @@ class ViewExecutable {
    * @return array
    *   An array of plugin type strings.
    */
-  public static function getPluginTypes() {
-    return array(
-      'access',
-      'area',
-      'argument',
-      'argument_default',
-      'argument_validator',
-      'cache',
-      'display_extender',
-      'display',
-      'exposed_form',
-      'field',
-      'filter',
-      'join',
-      'pager',
-      'query',
-      'relationship',
-      'row',
-      'sort',
-      'style',
-      'wizard',
-    );
+  public static function getPluginTypes($type = NULL) {
+    return Views::getPluginTypes($type);
   }
 
   /**
@@ -1904,14 +1874,14 @@ class ViewExecutable {
    * @return string
    *   The unique ID for this handler instance.
    */
-  public function addItem($display_id, $type, $table, $field, $options = array(), $id = NULL) {
-    $types = $this::viewsHandlerTypes();
+  public function addHandler($display_id, $type, $table, $field, $options = array(), $id = NULL) {
+    $types = $this::getHandlerTypes();
     $this->setDisplay($display_id);
 
     $fields = $this->displayHandlers->get($display_id)->getOption($types[$type]['plural']);
 
     if (empty($id)) {
-      $id = $this->generateItemId($field, $fields);
+      $id = $this->generateHandlerId($field, $fields);
     }
 
     // If the desired type is not found, use the original value directly.
@@ -1954,7 +1924,7 @@ class ViewExecutable {
    *   integer to make it unique, e.g., "{$requested_id}_1",
    *   "{$requested_id}_2", etc.
    */
-  public static function generateItemId($requested_id, $existing_items) {
+  public static function generateHandlerId($requested_id, $existing_items) {
     $count = 0;
     $id = $requested_id;
     while (!empty($existing_items[$id])) {
@@ -1975,7 +1945,7 @@ class ViewExecutable {
    * @return array
    *   An array of handler instances of a given type for this display.
    */
-  public function getItems($type, $display_id = NULL) {
+  public function getHandlers($type, $display_id = NULL) {
     $this->setDisplay($display_id);
 
     if (!isset($display_id)) {
@@ -1983,7 +1953,7 @@ class ViewExecutable {
     }
 
     // Get info about the types so we can get the right data.
-    $types = static::viewsHandlerTypes();
+    $types = static::getHandlerTypes();
     return $this->displayHandlers->get($display_id)->getOption($types[$type]['plural']);
   }
 
@@ -2001,9 +1971,9 @@ class ViewExecutable {
    *   Either the handler instance's configuration, or NULL if the handler is
    *   not used on the display.
    */
-  public function getItem($display_id, $type, $id) {
+  public function getHandler($display_id, $type, $id) {
     // Get info about the types so we can get the right data.
-    $types = static::viewsHandlerTypes();
+    $types = static::getHandlerTypes();
     // Initialize the display
     $this->setDisplay($display_id);
 
@@ -2027,9 +1997,9 @@ class ViewExecutable {
    *
    * @see set_item_option()
    */
-  public function setItem($display_id, $type, $id, $item) {
+  public function setHandler($display_id, $type, $id, $item) {
     // Get info about the types so we can get the right data.
-    $types = static::viewsHandlerTypes();
+    $types = static::getHandlerTypes();
     // Initialize the display.
     $this->setDisplay($display_id);
 
@@ -2053,9 +2023,9 @@ class ViewExecutable {
    * @param string $id
    *   The ID of the handler being removed.
    */
-  public function removeItem($display_id, $type, $id) {
+  public function removeHandler($display_id, $type, $id) {
     // Get info about the types so we can get the right data.
-    $types = static::viewsHandlerTypes();
+    $types = static::getHandlerTypes();
     // Initialize the display.
     $this->setDisplay($display_id);
 
@@ -2088,10 +2058,10 @@ class ViewExecutable {
    *
    * @see set_item()
    */
-  public function setItemOption($display_id, $type, $id, $option, $value) {
-    $item = $this->getItem($display_id, $type, $id);
+  public function setHandlerOption($display_id, $type, $id, $option, $value) {
+    $item = $this->getHandler($display_id, $type, $id);
     $item[$option] = $value;
-    $this->setItem($display_id, $type, $id, $item);
+    $this->setHandler($display_id, $type, $id, $item);
   }
 
   /**
@@ -2156,6 +2126,42 @@ class ViewExecutable {
     $themes[] = $hook;
 
     return $themes;
+  }
+
+  /**
+   * Determines if this view has form elements.
+   *
+   * @return bool
+   *   Returns TRUE if this view contains handlers with views form
+   *   implementations, FALSE otherwise.
+   */
+  public function hasFormElements() {
+    foreach ($this->field as $field) {
+      if (property_exists($field, 'views_form_callback') || method_exists($field, 'viewsForm')) {
+        return TRUE;
+      }
+    }
+    $area_handlers = array_merge(array_values($this->header), array_values($this->footer));
+    $empty = empty($this->result);
+    foreach ($area_handlers as $area) {
+      if (method_exists($area, 'viewsForm') && !$area->viewsFormEmpty($empty)) {
+        return TRUE;
+      }
+    }
+
+    return FALSE;
+  }
+
+  /**
+   * Calculates dependencies for the view.
+   *
+   * @see \Drupal\views\Entity\View::calculateDependencies()
+   *
+   * @return array
+   *   An array of dependencies grouped by type (module, theme, entity).
+   */
+  public function calculateDependencies() {
+    return $this->storage->calculateDependencies();
   }
 
 }

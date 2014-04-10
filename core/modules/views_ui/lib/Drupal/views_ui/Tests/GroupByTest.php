@@ -35,7 +35,7 @@ class GroupByTest extends UITestBase {
   function testGroupBySave() {
     $this->drupalGet('admin/structure/views/view/test_views_groupby_save/edit');
 
-    $edit_groubpy_url = 'admin/structure/views/nojs/config-item-group/test_views_groupby_save/default/field/id';
+    $edit_groubpy_url = 'admin/structure/views/nojs/handler-group/test_views_groupby_save/default/field/id';
     $this->assertNoLinkByHref($edit_groubpy_url, 0, 'No aggregation link found.');
 
     // Enable aggregation on the view.
@@ -52,7 +52,7 @@ class GroupByTest extends UITestBase {
 
     $this->drupalPostForm(NULL, array(), t('Save'));
 
-    $view = $this->container->get('entity.manager')->getStorageController('view')->load('test_views_groupby_save');
+    $view = $this->container->get('entity.manager')->getStorage('view')->load('test_views_groupby_save');
     $display = $view->getDisplay('default');
     $this->assertTrue($display['display_options']['group_by'], 'The groupby setting was saved on the view.');
     $this->assertEqual($display['display_options']['fields']['id']['group_type'], 'count', 'Count groupby_type was saved on the view.');

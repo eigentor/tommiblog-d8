@@ -8,10 +8,11 @@
 namespace Drupal\Core\Datetime;
 
 use Drupal\Component\Utility\Xss;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\Core\Language\Language;
-use Drupal\Core\Language\LanguageManager;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\StringTranslation\TranslationInterface;
 
 /**
@@ -29,16 +30,23 @@ class Date {
   /**
    * The date format storage.
    *
-   * @var \Drupal\Core\Entity\EntityStorageControllerInterface
+   * @var \Drupal\Core\Entity\EntityStorageInterface
    */
   protected $dateFormatStorage;
 
   /**
    * Language manager for retrieving the default langcode when none is specified.
    *
-   * @var \Drupal\Core\Language\LanguageManager
+   * @var \Drupal\Core\Language\LanguageManagerInterface
    */
   protected $languageManager;
+
+  /**
+   * The configuration factory.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $configFactory;
 
   protected $country = NULL;
   protected $dateFormats = array();
@@ -67,15 +75,18 @@ class Date {
    *
    * @param \Drupal\Core\Entity\EntityManagerInterface $entity_manager
    *   The entity manager.
-   * @param \Drupal\Core\Language\LanguageManager $language_manager
+   * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
    *   The language manager.
    * @param \Drupal\Core\StringTranslation\TranslationInterface $translation
    *   The string translation.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The configuration factory.
    */
-  public function __construct(EntityManagerInterface $entity_manager, LanguageManager $language_manager, TranslationInterface $translation) {
-    $this->dateFormatStorage = $entity_manager->getStorageController('date_format');
+  public function __construct(EntityManagerInterface $entity_manager, LanguageManagerInterface $language_manager, TranslationInterface $translation, ConfigFactoryInterface $config_factory) {
+    $this->dateFormatStorage = $entity_manager->getStorage('date_format');
     $this->languageManager = $language_manager;
     $this->stringTranslation = $translation;
+    $this->configFactory = $config_factory;
   }
 
   /**
@@ -119,7 +130,7 @@ class Date {
     }
 
     if (empty($langcode)) {
-      $langcode = $this->languageManager->getLanguage(Language::TYPE_INTERFACE)->id;
+      $langcode = $this->languageManager->getCurrentLanguage()->id;
     }
 
     // Create a DrupalDateTime object from the timestamp and timezone.
@@ -204,12 +215,10 @@ class Date {
    */
   protected function dateFormat($format, $langcode) {
     if (!isset($this->dateFormats[$format][$langcode])) {
-      // Enter a language specific context so the right date format is loaded.
-      $language_context = config_context_enter('Drupal\Core\Config\Context\LanguageConfigContext');
-      $language_context->setLanguage(new Language(array('id' => $langcode)));
-
+      $original_language = $this->languageManager->getConfigOverrideLanguage();
+      $this->languageManager->setConfigOverrideLanguage(new Language(array('id' => $langcode)));
       $this->dateFormats[$format][$langcode] = $this->dateFormatStorage->load($format);
-      config_context_leave();
+      $this->languageManager->setConfigOverrideLanguage($original_language);
     }
     return $this->dateFormats[$format][$langcode];
   }

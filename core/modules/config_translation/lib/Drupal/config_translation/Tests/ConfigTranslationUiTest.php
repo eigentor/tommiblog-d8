@@ -23,7 +23,7 @@ class ConfigTranslationUiTest extends WebTestBase {
    *
    * @var array
    */
-  public static $modules = array('contact', 'config_translation', 'config_translation_test', 'views', 'views_ui', 'contextual');
+  public static $modules = array('node', 'contact', 'config_translation', 'config_translation_test', 'views', 'views_ui', 'contextual');
 
   /**
    * Languages to enable.
@@ -177,15 +177,14 @@ class ConfigTranslationUiTest extends WebTestBase {
     $this->drupalPostForm("$translation_base_url/fr/add", $edit, t('Save translation'));
 
     // Read overridden file from active config.
-    $file_storage = new FileStorage($this->configDirectories[CONFIG_ACTIVE_DIRECTORY]);
-    $config_parsed = $file_storage->read('locale.config.fr.system.site');
+    $override = \Drupal::languageManager()->getLanguageConfigOverride('fr', 'system.site');
 
     // Expect both name and slogan in language specific file.
     $expected = array(
       'name' => 'FR ' . $site_name,
       'slogan' => 'FR ' . $site_slogan,
     );
-    $this->assertEqual($expected, $config_parsed);
+    $this->assertEqual($expected, $override->get());
 
     // Case 2: Update new value for site slogan and default value for site name.
     $this->drupalGet("$translation_base_url/fr/edit");
@@ -199,11 +198,11 @@ class ConfigTranslationUiTest extends WebTestBase {
     );
     $this->drupalPostForm(NULL, $edit, t('Save translation'));
     $this->assertRaw(t('Successfully updated @language translation.', array('@language' => 'French')));
-    $config_parsed = $file_storage->read('locale.config.fr.system.site');
+    $override = \Drupal::languageManager()->getLanguageConfigOverride('fr', 'system.site');
 
     // Expect only slogan in language specific file.
-    $expected = array('slogan' => 'FR ' . $site_slogan);
-    $this->assertEqual($expected, $config_parsed);
+    $expected = 'FR ' . $site_slogan;
+    $this->assertEqual($expected, $override->get('slogan'));
 
     // Case 3: Keep default value for site name and slogan.
     $this->drupalGet("$translation_base_url/fr/edit");
@@ -213,10 +212,10 @@ class ConfigTranslationUiTest extends WebTestBase {
       'config_names[system.site][slogan][translation]' => $site_slogan,
     );
     $this->drupalPostForm(NULL, $edit, t('Save translation'));
-    $config_parsed = $file_storage->read('locale.config.fr.system.site');
+    $override = \Drupal::languageManager()->getLanguageConfigOverride('fr', 'system.site');
 
     // Expect no language specific file.
-    $this->assertFalse($config_parsed);
+    $this->assertTrue($override->isNew());
 
     // Check configuration page with translator user. Should have no access.
     $this->drupalLogout();
@@ -238,8 +237,6 @@ class ConfigTranslationUiTest extends WebTestBase {
    */
   public function testContactConfigEntityTranslation() {
     $this->drupalLogin($this->admin_user);
-
-    $file_storage = new FileStorage($this->configDirectories[CONFIG_ACTIVE_DIRECTORY]);
 
     $this->drupalGet('admin/structure/contact');
 
@@ -284,12 +281,12 @@ class ConfigTranslationUiTest extends WebTestBase {
       $this->drupalPostForm($translation_page_url, $edit, t('Save translation'));
 
       // Expect translated values in language specific file.
-      $config_parsed = $file_storage->read('locale.config.'. $langcode . '.contact.category.feedback');
+      $override = \Drupal::languageManager()->getLanguageConfigOverride($langcode, 'contact.category.feedback');
       $expected = array(
         'label' => 'Website feedback - ' . $langcode,
         'reply' => 'Thank you for your mail - ' . $langcode,
       );
-      $this->assertEqual($expected, $config_parsed);
+      $this->assertEqual($expected, $override->get());
 
       // Check for edit, delete links (and no 'add' link) for $langcode.
       $this->assertNoLinkByHref("$translation_base_url/$langcode/add");
@@ -347,8 +344,8 @@ class ConfigTranslationUiTest extends WebTestBase {
       $this->assertNoLinkByHref("$translation_base_url/$langcode/delete");
 
       // Expect no language specific file present anymore.
-      $config_parsed = $file_storage->read('locale.config.'. $langcode . '.config.category.feedback');
-      $this->assertFalse($config_parsed);
+      $override = \Drupal::languageManager()->getLanguageConfigOverride($langcode, 'contact.category.feedback');
+      $this->assertTrue($override->isNew());
     }
 
     // Check configuration page with translator user. Should have no access.
@@ -414,12 +411,12 @@ class ConfigTranslationUiTest extends WebTestBase {
       $this->drupalPostForm($translation_page_url, $edit, t('Save translation'));
 
       // Get translation and check we've got the right value.
-      $config_parsed = $file_storage->read('locale.config.fr.system.date_format.' . $id);
+      $override = \Drupal::languageManager()->getLanguageConfigOverride('fr', 'system.date_format.' . $id);
       $expected = array(
         'label' => $id . ' - FR',
         'pattern' => array('php' => 'D'),
       );
-      $this->assertEqual($expected, $config_parsed);
+      $this->assertEqual($expected, $override->get());
 
       // Formatting the date 8 / 27 / 1985 @ 13:37 EST with pattern D should
       // display "Tue".
@@ -566,6 +563,12 @@ class ConfigTranslationUiTest extends WebTestBase {
    * Test translation storage in locale storage.
    */
   public function testLocaleDBStorage() {
+    // Enable import of translations. By default this is disabled for automated
+    // tests.
+    \Drupal::config('locale.settings')
+      ->set('translation.import_enabled', TRUE)
+      ->save();
+
     $this->drupalLogin($this->admin_user);
 
     $langcode = 'xx';
@@ -659,8 +662,9 @@ class ConfigTranslationUiTest extends WebTestBase {
     // Enable the test theme and rebuild routes.
     $theme = 'config_translation_test_theme';
     theme_enable(array($theme));
-    \Drupal::service('router.builder')->rebuild();
-    menu_router_rebuild();
+    // Enabling a theme will cause the kernel terminate event to rebuild the
+    // router. Simulate that here.
+    \Drupal::service('router.builder')->rebuildIfNeeded();
 
     $this->drupalLogin($this->admin_user);
 

@@ -7,14 +7,12 @@
 
 namespace Drupal\views\Plugin\views\filter;
 
-use Drupal\Component\Annotation\PluginID;
-
 /**
  * Simple filter to handle equal to / not equal to filters
  *
  * @ingroup views_filter_handlers
  *
- * @PluginID("equality")
+ * @ViewsFilter("equality")
  */
 class Equality extends FilterPluginBase {
 

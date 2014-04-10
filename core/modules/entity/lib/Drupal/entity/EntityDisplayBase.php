@@ -8,13 +8,15 @@
 namespace Drupal\entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
-use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Entity\Display\EntityDisplayInterface;
+use Drupal\field\Field;
 
 /**
- * Base class for config entity types that store configuration for entity forms
- * and displays.
+ * Provides a common base class for entity view and form displays.
  */
-abstract class EntityDisplayBase extends ConfigEntityBase implements EntityDisplayBaseInterface {
+abstract class EntityDisplayBase extends ConfigEntityBase implements EntityDisplayInterface {
 
   /**
    * Unique ID for the config entity.
@@ -22,13 +24,6 @@ abstract class EntityDisplayBase extends ConfigEntityBase implements EntityDispl
    * @var string
    */
   public $id;
-
-  /**
-   * Unique UUID for the config entity.
-   *
-   * @var string
-   */
-  public $uuid;
 
   /**
    * Entity type to be displayed.
@@ -45,15 +40,11 @@ abstract class EntityDisplayBase extends ConfigEntityBase implements EntityDispl
   public $bundle;
 
   /**
-   * A partial entity, created via _field_create_entity_from_ids() from
-   * $targetEntityType and $bundle.
+   * A list of field definitions eligible for configuration in this display.
    *
-   * @var \Drupal\Core\Entity\EntityInterface
-   *
-   * @todo Remove when getFieldDefinition() is fixed to not need it.
-   *   https://drupal.org/node/2114707
+   * @var \Drupal\Core\Field\FieldDefinitionInterface[]
    */
-  private $targetEntity;
+  protected $fieldDefinitions;
 
   /**
    * View or form mode to be displayed.
@@ -76,6 +67,13 @@ abstract class EntityDisplayBase extends ConfigEntityBase implements EntityDispl
    * @var array
    */
   protected $content = array();
+
+  /**
+   * List of components that are set to be hidden.
+   *
+   * @var array
+   */
+  protected $hidden = array();
 
   /**
    * The original view or form mode that was requested (case of view/form modes
@@ -115,7 +113,7 @@ abstract class EntityDisplayBase extends ConfigEntityBase implements EntityDispl
     // Add the validity checks back when http://drupal.org/node/1856556 is
     // fixed.
     // if (!isset($values['targetEntityType']) || !isset($values['bundle']) || !isset($values['mode'])) {
-    //   throw new \InvalidArgumentException('Missing required properties for an EntityDisplay entity.');
+    //   throw new \InvalidArgumentException('Missing required properties for an EntityDisplayBase entity.');
     // }
 
     // A plugin manager and a context type needs to be set by extending classes.
@@ -129,6 +127,8 @@ abstract class EntityDisplayBase extends ConfigEntityBase implements EntityDispl
     parent::__construct($values, $entity_type);
 
     $this->originalMode = $this->mode;
+
+    $this->init();
   }
 
   /**
@@ -141,35 +141,133 @@ abstract class EntityDisplayBase extends ConfigEntityBase implements EntityDispl
   /**
    * {@inheritdoc}
    */
-  public function save() {
-    $return = parent::save();
-
-    // Reset the render cache for the target entity type.
-    if (\Drupal::entityManager()->hasController($this->targetEntityType, 'view_builder')) {
-      \Drupal::entityManager()->getViewBuilder($this->targetEntityType)->resetCache();
-    }
-
-    return $return;
+  public function preSave(EntityStorageInterface $storage, $update = TRUE) {
+    // Sort elements by weight before saving.
+    uasort($this->content, 'Drupal\Component\Utility\SortArray::sortByWeightElement');
+    parent::preSave($storage, $update);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getExportProperties() {
+  public function calculateDependencies() {
+    parent::calculateDependencies();
+    $target_entity_type = \Drupal::entityManager()->getDefinition($this->targetEntityType);
+
+    $bundle_entity_type_id = $target_entity_type->getBundleEntityType();
+    if ($bundle_entity_type_id != 'bundle') {
+      // If the target entity type uses entities to manage its bundles then
+      // depend on the bundle entity.
+      $bundle_entity = \Drupal::entityManager()->getStorage($bundle_entity_type_id)->load($this->bundle);
+      $this->addDependency('entity', $bundle_entity->getConfigDependencyName());
+    }
+    // Create dependencies on both hidden and visible fields.
+    $fields = $this->content + $this->hidden;
+    foreach ($fields as $field_name => $component) {
+      $field_instance = Field::fieldInfo()->getInstance($this->targetEntityType, $this->bundle, $field_name);
+      if ($field_instance) {
+        $this->addDependency('entity', $field_instance->getConfigDependencyName());
+      }
+      // Create a dependency on the module that provides the formatter or
+      // widget.
+      if (isset($component['type'])) {
+        $definition = $this->pluginManager->getDefinition($component['type']);
+        $this->addDependency('module', $definition['provider']);
+      }
+    }
+    // Depend on configured modes.
+    if ($this->mode != 'default') {
+      $mode_entity = \Drupal::entityManager()->getStorage($this->displayContext . '_mode')->load($target_entity_type->id() . '.' . $this->mode);
+      $this->addDependency('entity', $mode_entity->getConfigDependencyName());
+    }
+    return $this->dependencies;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function postSave(EntityStorageInterface $storage, $update = TRUE) {
+    // Reset the render cache for the target entity type.
+    if (\Drupal::entityManager()->hasController($this->targetEntityType, 'view_builder')) {
+      \Drupal::entityManager()->getViewBuilder($this->targetEntityType)->resetCache();
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function toArray() {
     $names = array(
-      'id',
       'uuid',
       'targetEntityType',
       'bundle',
       'mode',
       'content',
+      'hidden',
       'status',
+      'dependencies'
     );
-    $properties = array();
+    $properties = array(
+      'id' => $this->id(),
+    );
     foreach ($names as $name) {
       $properties[$name] = $this->get($name);
     }
+
+    // Do not store options for fields whose display is not set to be
+    // configurable.
+    foreach ($this->getFieldDefinitions() as $field_name => $definition) {
+      if (!$definition->isDisplayConfigurable($this->displayContext)) {
+        unset($properties['content'][$field_name]);
+        unset($properties['hidden'][$field_name]);
+      }
+    }
+
     return $properties;
+  }
+
+  /**
+   * Initializes the display.
+   *
+   * This fills in default options for components:
+   * - that are not explicitly known as either "visible" or "hidden" in the
+   *   display,
+   * - or that are not supposed to be configurable.
+   */
+  protected function init() {
+    // Fill in defaults for extra fields.
+    $extra_fields = field_info_extra_fields($this->targetEntityType, $this->bundle, ($this->displayContext == 'view' ? 'display' : $this->displayContext));
+    foreach ($extra_fields as $name => $definition) {
+      if (!isset($this->content[$name]) && !isset($this->hidden[$name])) {
+        // Extra fields are visible by default unless they explicitly say so.
+        if (!isset($definition['visible']) || $definition['visible'] == TRUE) {
+          $this->content[$name] = array(
+            'weight' => $definition['weight']
+          );
+        }
+        else {
+          $this->hidden[$name] = TRUE;
+        }
+      }
+    }
+
+    // Fill in defaults for fields.
+    $fields = $this->getFieldDefinitions();
+    foreach ($fields as $name => $definition) {
+      if (!$definition->isDisplayConfigurable($this->displayContext) || (!isset($this->content[$name]) && !isset($this->hidden[$name]))) {
+        $options = $definition->getDisplayOptions($this->displayContext);
+
+        if (!empty($options['type']) && $options['type'] == 'hidden') {
+          $this->hidden[$name] = TRUE;
+        }
+        elseif ($options) {
+          $this->content[$name] = $this->pluginManager->prepareConfiguration($definition->getType(), $options);
+        }
+        // Note: (base) fields that do not specify display options are not
+        // tracked in the display at all, in order to avoid cluttering the
+        // configuration that gets saved back.
+      }
+    }
   }
 
   /**
@@ -185,64 +283,14 @@ abstract class EntityDisplayBase extends ConfigEntityBase implements EntityDispl
    * {@inheritdoc}
    */
   public function getComponents() {
-    $result = array();
-    foreach ($this->content as $name => $options) {
-      if (!isset($options['visible']) || $options['visible'] == TRUE) {
-        unset($options['visible']);
-        $result[$name] = $options;
-      }
-    }
-    return $result;
+    return $this->content;
   }
 
   /**
    * {@inheritdoc}
    */
   public function getComponent($name) {
-    // Until https://drupal.org/node/2144919 allows base fields to be configured
-    // in the UI, many base fields are also still registered as "extra fields"
-    // to keep appearing in the "Manage (form) display" screens.
-    // - Field UI still treats them as "base fields", saving only the weight
-    //   and visibility flag in the EntityDisplay.
-    // - For some of them (e.g. node title), the custom rendering code has been
-    //   removed in favor of regular widgets/formatters. Their display options
-    //   are "upgraded" to those of a field (widget/formatter + settings) at
-    //   runtime using hook_entity_display_alter().
-    // The getComponent() / setComponent() methods handle this by treating
-    // components as "extra fields" if they are registered as such, *and* if
-    // their display options contain no 'type' entry specifying a widget or
-    // formatter.
-    // @todo Cleanup after https://drupal.org/node/2144919 is fixed.
-    $extra_fields = field_info_extra_fields($this->targetEntityType, $this->bundle, $this->displayContext);
-    if (isset($extra_fields[$name]) && !isset($this->content[$name]['type'])) {
-      // If we have explicit settings, return an array or NULL depending on
-      // visibility.
-      if (isset($this->content[$name])) {
-        if ($this->content[$name]['visible']) {
-          return array(
-            'weight' => $this->content[$name]['weight'],
-          );
-        }
-        else {
-          return NULL;
-        }
-      }
-
-      // If no explicit settings for the extra field, look at the default
-      // visibility in its definition.
-      $definition = $extra_fields[$name];
-      if (!isset($definition['visible']) || $definition['visible'] == TRUE) {
-        return array(
-          'weight' => $definition['weight']
-        );
-      }
-      else {
-        return NULL;
-      }
-    }
-    elseif (isset($this->content[$name])) {
-      return $this->content[$name];
-    }
+    return isset($this->content[$name]) ? $this->content[$name] : NULL;
   }
 
   /**
@@ -255,20 +303,14 @@ abstract class EntityDisplayBase extends ConfigEntityBase implements EntityDispl
       $options['weight'] = isset($max) ? $max + 1 : 0;
     }
 
-    // See remark in getComponent().
-    // @todo Cleanup after https://drupal.org/node/2144919 is fixed.
-    $extra_fields = field_info_extra_fields($this->targetEntityType, $this->bundle, $this->displayContext);
-    if (isset($extra_fields[$name]) && !isset($options['type'])) {
-      $options['visible'] = TRUE;
+    // For a field, fill in default options.
+    if ($field_definition = $this->getFieldDefinition($name)) {
+      $options = $this->pluginManager->prepareConfiguration($field_definition->getType(), $options);
     }
-    elseif ($field_definition = $this->getFieldDefinition($name)) {
-      $options = $this->pluginManager->prepareConfiguration($field_definition->getFieldType(), $options);
-    }
-
-    // Clear the persisted plugin, if any.
-    unset($this->plugins[$name]);
 
     $this->content[$name] = $options;
+    unset($this->hidden[$name]);
+    unset($this->plugins[$name]);
 
     return $this;
   }
@@ -277,22 +319,8 @@ abstract class EntityDisplayBase extends ConfigEntityBase implements EntityDispl
    * {@inheritdoc}
    */
   public function removeComponent($name) {
-    // See remark in getComponent().
-    // @todo Cleanup after https://drupal.org/node/2144919 is fixed.
-    $extra_fields = field_info_extra_fields($this->targetEntityType, $this->bundle, $this->displayContext);
-    if (isset($extra_fields[$name]) && !isset($this->content[$name]['type'])) {
-      // 'Extra fields' are exposed in hooks and can appear at any given time.
-      // Therefore we store extra fields that are explicitly being hidden, so
-      // that we can differenciate with those that are simply not configured
-      // yet.
-      $this->content[$name] = array(
-        'visible' => FALSE,
-      );
-    }
-    else {
-      unset($this->content[$name]);
-    }
-
+    $this->hidden[$name] = TRUE;
+    unset($this->content[$name]);
     unset($this->plugins[$name]);
 
     return $this;
@@ -312,7 +340,7 @@ abstract class EntityDisplayBase extends ConfigEntityBase implements EntityDispl
     }
 
     // Let other modules feedback about their own additions.
-    $weights = array_merge($weights, module_invoke_all('field_info_max_weight', $this->targetEntityType, $this->bundle, $this->displayContext, $this->mode));
+    $weights = array_merge($weights, \Drupal::moduleHandler()->invokeAll('field_info_max_weight', array($this->targetEntityType, $this->bundle, $this->displayContext, $this->mode)));
 
     return $weights ? max($weights) : NULL;
   }
@@ -321,14 +349,32 @@ abstract class EntityDisplayBase extends ConfigEntityBase implements EntityDispl
    * Returns the field definition of a field.
    */
   protected function getFieldDefinition($field_name) {
-    // @todo Replace this entire implementation with
-    //   \Drupal::entityManager()->getFieldDefinition() when it can hand the
-    //   $instance objects - https://drupal.org/node/2114707
-    if (!isset($this->targetEntity)) {
-      $this->targetEntity = _field_create_entity_from_ids((object) array('entity_type' => $this->targetEntityType, 'bundle' => $this->bundle, 'entity_id' => NULL));
-    }
-    if (($this->targetEntity instanceof ContentEntityInterface) && $this->targetEntity->hasField($field_name)) {
-      return $this->targetEntity->get($field_name)->getFieldDefinition();
-    }
+    $definitions = $this->getFieldDefinitions();
+    return isset($definitions[$field_name]) ? $definitions[$field_name] : NULL;
   }
+
+  /**
+   * Returns the definitions of the fields that are candidate for display.
+   */
+  protected function getFieldDefinitions() {
+    // Entity displays are sometimes created for non-content entities.
+    // @todo Prevent this in https://drupal.org/node/2095195.
+    if (!\Drupal::entityManager()->getDefinition($this->targetEntityType)->isSubclassOf('\Drupal\Core\Entity\ContentEntityInterface')) {
+      return array();
+    }
+
+    if (!isset($this->fieldDefinitions)) {
+      $definitions = \Drupal::entityManager()->getFieldDefinitions($this->targetEntityType, $this->bundle);
+
+      // The display only cares about fields that specify display options.
+      // Discard base fields that are not rendered through formatters / widgets.
+      $display_context = $this->displayContext;
+      $this->fieldDefinitions = array_filter($definitions, function (FieldDefinitionInterface $definition) use ($display_context) {
+        return $definition->getDisplayOptions($display_context);
+      });
+    }
+
+    return $this->fieldDefinitions;
+  }
+
 }

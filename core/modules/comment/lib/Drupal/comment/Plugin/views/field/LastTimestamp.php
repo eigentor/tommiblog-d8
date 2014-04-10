@@ -11,14 +11,13 @@ use Drupal\views\Plugin\views\field\Date;
 use Drupal\views\Plugin\views\display\DisplayPluginBase;
 use Drupal\views\ResultRow;
 use Drupal\views\ViewExecutable;
-use Drupal\Component\Annotation\PluginID;
 
 /**
  * Field handler to display the timestamp of a comment with the count of comments.
  *
  * @ingroup views_field_handlers
  *
- * @PluginID("comment_last_timestamp")
+ * @ViewsField("comment_last_timestamp")
  */
 class LastTimestamp extends Date {
 

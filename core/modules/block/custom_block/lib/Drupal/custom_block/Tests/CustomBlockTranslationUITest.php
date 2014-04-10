@@ -48,7 +48,7 @@ class CustomBlockTranslationUITest extends ContentTranslationUITest {
    * Overrides \Drupal\simpletest\WebTestBase::setUp().
    */
   public function setUp() {
-    $this->entityType = 'custom_block';
+    $this->entityTypeId = 'custom_block';
     $this->bundle = 'basic';
     $this->name = drupal_strtolower($this->randomName());
     $this->testLanguageSelector = FALSE;
@@ -97,6 +97,20 @@ class CustomBlockTranslationUITest extends ContentTranslationUITest {
    */
   protected function getNewEntityValues($langcode) {
     return array('info' => $this->name) + parent::getNewEntityValues($langcode);
+  }
+
+  /**
+   * Returns an edit array containing the values to be posted.
+   */
+  protected function getEditValues($values, $langcode, $new = FALSE) {
+    $edit = parent::getEditValues($values, $langcode, $new);
+    foreach ($edit as $property => $value) {
+      if ($property == 'info') {
+        $edit['info[0][value]'] = $value;
+        unset($edit[$property]);
+      }
+    }
+    return $edit;
   }
 
   /**

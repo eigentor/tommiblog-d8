@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Definition of Drupal\Core\Template\AttributeValueBase.
+ * Contains \Drupal\Core\Template\AttributeValueBase.
  */
 
 namespace Drupal\Core\Template;
@@ -55,7 +55,9 @@ abstract class AttributeValueBase {
    *   The string representation of the attribute.
    */
   public function render() {
-    return String::checkPlain($this->name) . '="' . $this . '"';
+    if (isset($this->value)) {
+      return String::checkPlain($this->name) . '="' . $this . '"';
+    }
   }
 
   /**

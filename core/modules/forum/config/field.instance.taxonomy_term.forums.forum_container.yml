@@ -1,10 +1,9 @@
 id: taxonomy_term.forums.forum_container
-uuid: 8421d585-f6ef-4209-ad00-cfb30a1ab075
 status: true
 langcode: en
-field_uuid: babf2ba1-505f-4c71-8a07-7be19f4fb9f3
 entity_type: taxonomy_term
 bundle: forums
+field_name: forum_container
 label: Container
 description: ''
 required: true
@@ -14,3 +13,7 @@ default_value:
 default_value_function: ''
 settings: {  }
 field_type: list_boolean
+dependencies:
+  entity:
+    - field.field.taxonomy_term.forum_container
+    - taxonomy.vocabulary.forums

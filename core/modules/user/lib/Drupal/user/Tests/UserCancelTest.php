@@ -8,11 +8,19 @@
 namespace Drupal\user\Tests;
 
 use Drupal\simpletest\WebTestBase;
+use Drupal\comment\CommentInterface;
 
 /**
  * Test cancelling a user.
  */
 class UserCancelTest extends WebTestBase {
+
+  /**
+   * Modules to enable.
+   *
+   * @var array
+   */
+  public static $modules = array('node', 'comment');
 
   public static function getInfo() {
     return array(
@@ -56,7 +64,7 @@ class UserCancelTest extends WebTestBase {
 
     // Confirm user's content has not been altered.
     $test_node = node_load($node->id(), TRUE);
-    $this->assertTrue(($test_node->getAuthorId() == $account->id() && $test_node->isPublished()), 'Node of the user has not been altered.');
+    $this->assertTrue(($test_node->getOwnerId() == $account->id() && $test_node->isPublished()), 'Node of the user has not been altered.');
   }
 
   /**
@@ -137,7 +145,7 @@ class UserCancelTest extends WebTestBase {
 
     // Confirm user's content has not been altered.
     $test_node = node_load($node->id(), TRUE);
-    $this->assertTrue(($test_node->getAuthorId() == $account->id() && $test_node->isPublished()), 'Node of the user has not been altered.');
+    $this->assertTrue(($test_node->getOwnerId() == $account->id() && $test_node->isPublished()), 'Node of the user has not been altered.');
   }
 
   /**
@@ -180,6 +188,8 @@ class UserCancelTest extends WebTestBase {
    */
   function testUserBlockUnpublish() {
     \Drupal::config('user.settings')->set('cancel_method', 'user_cancel_block_unpublish')->save();
+    // Create comment field on page.
+    \Drupal::service('comment.manager')->addDefaultField('node', 'page');
 
     // Create a user.
     $account = $this->drupalCreateUser(array('cancel account'));
@@ -192,6 +202,20 @@ class UserCancelTest extends WebTestBase {
     $settings = get_object_vars($node);
     $settings['revision'] = 1;
     $node = $this->drupalCreateNode($settings);
+
+    // Add a comment to the page.
+    $comment_subject = $this->randomName(8);
+    $comment_body = $this->randomName(8);
+    $comment = entity_create('comment', array(
+      'subject' => $comment_subject,
+      'comment_body' => $comment_body,
+      'entity_id' => $node->id(),
+      'entity_type' => 'node',
+      'field_name' => 'comment',
+      'status' => CommentInterface::PUBLISHED,
+      'uid' => $account->id(),
+    ));
+    $comment->save();
 
     // Attempt to cancel account.
     $this->drupalGet('user/' . $account->id() . '/edit');
@@ -214,6 +238,11 @@ class UserCancelTest extends WebTestBase {
     $this->assertFalse($test_node->isPublished(), 'Node of the user has been unpublished.');
     $test_node = node_revision_load($node->getRevisionId());
     $this->assertFalse($test_node->isPublished(), 'Node revision of the user has been unpublished.');
+
+    $storage = \Drupal::entityManager()->getStorage('comment');
+    $storage->resetCache(array($comment->id()));
+    $comment = $storage->load($comment->id());
+    $this->assertFalse($comment->isPublished(), 'Comment of the user has been unpublished.');
 
     // Confirm that the confirmation message made it through to the end user.
     $this->assertRaw(t('%name has been disabled.', array('%name' => $account->getUsername())), "Confirmation message displayed to user.");
@@ -260,11 +289,11 @@ class UserCancelTest extends WebTestBase {
 
     // Confirm that user's content has been attributed to anonymous user.
     $test_node = node_load($node->id(), TRUE);
-    $this->assertTrue(($test_node->getAuthorId() == 0 && $test_node->isPublished()), 'Node of the user has been attributed to anonymous user.');
+    $this->assertTrue(($test_node->getOwnerId() == 0 && $test_node->isPublished()), 'Node of the user has been attributed to anonymous user.');
     $test_node = node_revision_load($revision, TRUE);
     $this->assertTrue(($test_node->getRevisionAuthor()->id() == 0 && $test_node->isPublished()), 'Node revision of the user has been attributed to anonymous user.');
     $test_node = node_load($revision_node->id(), TRUE);
-    $this->assertTrue(($test_node->getAuthorId() != 0 && $test_node->isPublished()), "Current revision of the user's node was not attributed to anonymous user.");
+    $this->assertTrue(($test_node->getOwnerId() != 0 && $test_node->isPublished()), "Current revision of the user's node was not attributed to anonymous user.");
 
     // Confirm that the confirmation message made it through to the end user.
     $this->assertRaw(t('%name has been deleted.', array('%name' => $account->getUsername())), "Confirmation message displayed to user.");

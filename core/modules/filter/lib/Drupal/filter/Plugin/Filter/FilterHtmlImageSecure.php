@@ -7,8 +7,6 @@
 
 namespace Drupal\filter\Plugin\Filter;
 
-use Drupal\filter\Annotation\Filter;
-use Drupal\Core\Annotation\Translation;
 use Drupal\filter\Plugin\FilterBase;
 
 /**
@@ -16,10 +14,9 @@ use Drupal\filter\Plugin\FilterBase;
  *
  * @Filter(
  *   id = "filter_html_image_secure",
- *   module = "filter",
  *   title = @Translation("Restrict images to this site"),
  *   description = @Translation("Disallows usage of &lt;img&gt; tag sources that are not hosted on this site by replacing them with a placeholder image."),
- *   type = FILTER_TYPE_HTML_RESTRICTOR,
+ *   type = Drupal\filter\Plugin\FilterInterface::TYPE_TRANSFORM_IRREVERSIBLE,
  *   weight = 9
  * )
  */
@@ -36,7 +33,7 @@ class FilterHtmlImageSecure extends FilterBase {
    * {@inheritdoc}
    */
   public function tips($long = FALSE) {
-    return t('Only images hosted on this site may be used in &lt;img&gt; tags.');
+    return $this->t('Only images hosted on this site may be used in &lt;img&gt; tags.');
   }
 
 }

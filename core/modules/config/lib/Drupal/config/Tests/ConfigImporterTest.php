@@ -44,26 +44,28 @@ class ConfigImporterTest extends DrupalUnitTestBase {
 
     $this->installSchema('system', 'config_snapshot');
 
-    config_install_default_config('module', 'config_test');
+    $this->installConfig(array('config_test'));
     // Installing config_test's default configuration pollutes the global
     // variable being used for recording hook invocations by this test already,
     // so it has to be cleared out manually.
     unset($GLOBALS['hook_config_test']);
 
+    $this->copyConfig($this->container->get('config.storage'), $this->container->get('config.storage.staging'));
+
     // Set up the ConfigImporter object for testing.
-    $config_comparer = new StorageComparer(
+    $storage_comparer = new StorageComparer(
       $this->container->get('config.storage.staging'),
       $this->container->get('config.storage')
     );
     $this->configImporter = new ConfigImporter(
-      $config_comparer->createChangelist(),
+      $storage_comparer->createChangelist(),
       $this->container->get('event_dispatcher'),
-      $this->container->get('config.factory'),
-      $this->container->get('entity.manager'),
+      $this->container->get('config.manager'),
       $this->container->get('lock'),
-      $this->container->get('uuid')
+      $this->container->get('config.typed'),
+      $this->container->get('module_handler'),
+      $this->container->get('theme_handler')
     );
-    $this->copyConfig($this->container->get('config.storage'), $this->container->get('config.storage.staging'));
   }
 
   /**
@@ -88,10 +90,29 @@ class ConfigImporterTest extends DrupalUnitTestBase {
     try {
       $this->container->get('config.storage.staging')->deleteAll();
       $this->configImporter->reset()->import();
-      $this->assertFalse(FALSE, "ConfigImporterException not thrown, we didn't stop an empty import.");
+      $this->fail('ConfigImporterException thrown, successfully stopping an empty import.');
     }
     catch (ConfigImporterException $e) {
-      $this->assertTrue(TRUE, 'ConfigImporterException thrown, successfully stopping an empty import.');
+      $this->pass('ConfigImporterException thrown, successfully stopping an empty import.');
+    }
+  }
+
+  /**
+   * Tests verification of site UUID before importing configuration.
+   */
+  function testSiteUuidValidate() {
+    $staging = \Drupal::service('config.storage.staging');
+    // Create updated configuration object.
+    $config_data = \Drupal::config('system.site')->get();
+    // Generate a new site UUID.
+    $config_data['uuid'] = \Drupal::service('uuid')->generate();
+    $staging->write('system.site', $config_data);
+    try {
+      $this->configImporter->reset()->import();
+      $this->assertFalse(FALSE, 'ConfigImporterException not thrown, invalid import was not stopped due to mis-matching site UUID.');
+    }
+    catch (ConfigImporterException $e) {
+      $this->assertEqual($e->getMessage(), 'Site UUID in source storage does not match the target storage.');
     }
   }
 
@@ -127,8 +148,7 @@ class ConfigImporterTest extends DrupalUnitTestBase {
     $this->assertTrue(isset($GLOBALS['hook_config_test']['predelete']));
     $this->assertTrue(isset($GLOBALS['hook_config_test']['delete']));
 
-    // Verify that there is nothing more to import.
-    $this->assertFalse($this->configImporter->hasUnprocessedChanges());
+    $this->assertFalse($this->configImporter->hasUnprocessedConfigurationChanges());
   }
 
   /**
@@ -145,12 +165,14 @@ class ConfigImporterTest extends DrupalUnitTestBase {
     // Create new config entity.
     $original_dynamic_data = array(
       'id' => 'new',
-      'uuid' => '30df59bd-7b03-4cf7-bb35-d42fc49f0651',
       'label' => 'New',
       'weight' => 0,
       'style' => '',
+      'test_dependencies' => array(),
       'status' => TRUE,
-      'langcode' => language_default()->id,
+      'uuid' => '30df59bd-7b03-4cf7-bb35-d42fc49f0651',
+      'langcode' => \Drupal::languageManager()->getDefaultLanguage()->id,
+      'dependencies' => array(),
       'protected_property' => '',
     );
     $staging->write($dynamic_name, $original_dynamic_data);
@@ -173,7 +195,7 @@ class ConfigImporterTest extends DrupalUnitTestBase {
     $this->assertFalse(isset($GLOBALS['hook_config_test']['delete']));
 
     // Verify that there is nothing more to import.
-    $this->assertFalse($this->configImporter->hasUnprocessedChanges());
+    $this->assertFalse($this->configImporter->hasUnprocessedConfigurationChanges());
   }
 
   /**
@@ -209,6 +231,7 @@ class ConfigImporterTest extends DrupalUnitTestBase {
     $this->configImporter->reset()->import();
 
     // Verify the values were updated.
+    \Drupal::configFactory()->reset($name);
     $config = \Drupal::config($name);
     $this->assertIdentical($config->get('foo'), 'beer');
     $config = \Drupal::config($dynamic_name);
@@ -227,7 +250,7 @@ class ConfigImporterTest extends DrupalUnitTestBase {
     $this->assertFalse(isset($GLOBALS['hook_config_test']['delete']));
 
     // Verify that there is nothing more to import.
-    $this->assertFalse($this->configImporter->hasUnprocessedChanges());
+    $this->assertFalse($this->configImporter->hasUnprocessedConfigurationChanges());
   }
 }
 

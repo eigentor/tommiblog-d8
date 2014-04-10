@@ -8,7 +8,6 @@
 namespace Drupal\comment\Plugin\views\sort;
 
 use Drupal\views\Plugin\views\sort\SortPluginBase;
-use Drupal\Component\Annotation\PluginID;
 
 /**
  * Sort handler to sort by last comment name which might be in 2 different
@@ -16,7 +15,7 @@ use Drupal\Component\Annotation\PluginID;
  *
  * @ingroup views_sort_handlers
  *
- * @PluginID("comment_ces_last_comment_name")
+ * @ViewsSort("comment_ces_last_comment_name")
  */
 class StatisticsLastCommentName extends SortPluginBase {
 

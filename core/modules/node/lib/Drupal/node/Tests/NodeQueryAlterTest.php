@@ -144,7 +144,7 @@ class NodeQueryAlterTest extends NodeTestBase {
       'grant_update' => 0,
       'grant_delete' => 0,
     );
-    drupal_write_record('node_access', $record);
+    db_insert('node_access')->fields($record)->execute();
 
     // Test that the noAccessUser still doesn't have the 'view'
     // privilege after adding the node_access record.
@@ -166,7 +166,7 @@ class NodeQueryAlterTest extends NodeTestBase {
     // Have node_test_node_grants return a node_access_all privilege,
     // to grant the noAccessUser 'view' access.  To verify that
     // node_access_view_all_nodes is properly checking the specified
-    // $account instead of the global $user, we will log in as
+    // $account instead of the current user, we will log in as
     // noAccessUser2.
     $this->drupalLogin($this->noAccessUser2);
     \Drupal::state()->set('node_access_test.no_access_uid', $this->noAccessUser->id());

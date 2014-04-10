@@ -8,8 +8,6 @@
 namespace Drupal\field_ui_test\Entity;
 
 use Drupal\Core\Entity\Entity;
-use Drupal\Core\Entity\Annotation\EntityType;
-use Drupal\Core\Annotation\Translation;
 
 /**
  * Defines the test Field UI class.
@@ -18,7 +16,7 @@ use Drupal\Core\Annotation\Translation;
  *   id = "field_ui_test_no_bundle",
  *   label = @Translation("Test Field UI entity, no bundle"),
  *   controllers = {
- *     "storage" = "Drupal\Core\Entity\DatabaseStorageController"
+ *     "storage" = "Drupal\Core\Entity\EntityDatabaseStorage"
  *   },
  *   fieldable = TRUE
  * )

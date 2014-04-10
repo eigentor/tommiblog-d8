@@ -7,15 +7,13 @@
 
 namespace Drupal\views\Plugin\views\argument;
 
-use Drupal\Component\Annotation\PluginID;
-
 /**
  * Basic argument handler for arguments that are numeric. Incorporates
  * break_phrase.
  *
  * @ingroup views_argument_handlers
  *
- * @PluginID("numeric")
+ * @ViewsArgument("numeric")
  */
 class Numeric extends ArgumentPluginBase {
 
