@@ -16,3 +16,4 @@ stylesheets:
     - css/layout-old.css
     - css/layout.css
     - css/base.css
+    - css/node.css
