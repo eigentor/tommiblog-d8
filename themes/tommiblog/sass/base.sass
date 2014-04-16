@@ -24,9 +24,12 @@ h1, h2, h3, h4, h5, h6, h1 a, h2 a, h3 a, h4 a, h4 a, h6 a
 .name-and-slogan .site-name,
 .name-and-slogan .site-name a
   font-family: $font-family-handwritten
-  font-size: 5rem
+  font-size: 6rem
   color: #9B1414
   line-height: 1
+  margin-bottom: 0
+  margin-top: 10px
+  margin-left: -8px
 
 
 /*** Standard HTML Elements ***/
@@ -45,6 +48,16 @@ code
   color: #999
   font-family: $font-family-headlines-thin
   margin: 3px 0 7px
+
+/** Drupal-specific micro elements */
+
+a.feed-icon 
+  display: none
+
+ul.links.inline
+  li 
+    padding: 0 10px 0 0
+    font-size: 0.83rem
 
 
 /*-------------------------------------------*/
