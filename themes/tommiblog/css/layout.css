@@ -1,14 +1,6 @@
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/variables-mixins\.sass}line{font-family:\0000313}}
-header, main, footer[role=contentinfo] {
-  max-width: 926px;
-  padding: 0 20px;
-}
-
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/variables-mixins\.sass}line{font-family:\0000317}}
-.lt-ie9 body header, .lt-ie9 body main, .lt-ie9 body footer[role=contentinfo] {
-  max-width: auto;
-  width: 926px;
-  padding: 0 40px;
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/_variables-mixins\.sass}line{font-family:\0000313}}
+header, main, footer[role=contentinfo], .lt-ie9 body header, .lt-ie9 body main, .lt-ie9 body footer[role=contentinfo] {
+  margin: 0 auto;
 }
 
 /*Base layout of the page */
@@ -23,10 +15,16 @@ body {
   padding: 0;
 }
 
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/layout\.sass}line{font-family:\0000317}}
+header, main, footer[role=contentinfo] {
+  max-width: 926px;
+  padding: 0 20px;
+}
+
 @media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/layout\.sass}line{font-family:\0000320}}
 .header-background {
   background: #fbf0cf;
-  border-bottom: 1px solid #ddd4ba;
+  border-bottom: 1px solid #ede2c4;
   padding: 5px 0 8px;
 }
 
@@ -41,6 +39,12 @@ main {
 /*------------------------------------------- */
 /*------------------------------------------- */
 @media (min-width: 960px) {
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/layout\.sass}line{font-family:\0000338}}
+  body header, body main, body footer[role=contentinfo] {
+    max-width: auto;
+    width: 926px;
+    padding: 0 40px;
+  }
 @media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/layout\.sass}line{font-family:\0000340}}
   body header {
     *zoom: 1;
@@ -86,6 +90,12 @@ main {
   body header #block-mainnavigation ul li a {
     color: #888888;
   }
+}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/layout\.sass}line{font-family:\0000338}}
+.lt-ie9 body header, .lt-ie9 body main, .lt-ie9 body footer[role=contentinfo] {
+  max-width: auto;
+  width: 926px;
+  padding: 0 40px;
 }
 @media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/layout\.sass}line{font-family:\0000340}}
 .lt-ie9 body header {

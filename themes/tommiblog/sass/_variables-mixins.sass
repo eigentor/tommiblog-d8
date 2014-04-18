@@ -10,11 +10,16 @@ $smartphone-grid-padding: 20px
 $grids: 12
 $gutter-width: 1/7
 
-%container-mobile 
+%container
+  margin: 0 auto
+
+@mixin container-mobile
+  @extend %container 
   max-width: 926px
   padding: 0 $smartphone-grid-padding
 
-%container-desktop
+@mixin container-desktop
+  @extend %container
   max-width: auto 
   width: 926px
   padding: 0 $desktop-grid-padding 
