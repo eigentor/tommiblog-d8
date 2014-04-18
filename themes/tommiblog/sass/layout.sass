@@ -1,5 +1,11 @@
 @import "variables-mixins.sass"
 
+// Set the behaviour of our IE8-Fallback.
+// Default to write it into the same file with an extra
+// wrapper class
+$breakpoint-no-queries: false
+$breakpoint-no-query-fallbacks: true
+
 /** Base layout of the page **/
 body 
   background: lighten(#F7E1A0, 19%)
@@ -9,7 +15,7 @@ body
   padding: 0
 
 header, main, footer[role=contentinfo]
-  +container 
+  @extend %container-mobile
 
 .header-background
   background: lighten(#F7E1A0, 10%)
@@ -28,7 +34,9 @@ main
 
 
 body
-  +at-breakpoint($breakpoint-desktop-with-ie-fallback)
+  +breakpoint($breakpoint-desktop-with-ie-fallback, $no-query: '.lt-ie9')
+    header, main, footer[role=contentinfo]
+      @extend %container-desktop
     header
       +legacy-pie-clearfix
       //padding-top: 20px
