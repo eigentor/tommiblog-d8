@@ -10,19 +10,18 @@ $smartphone-grid-padding: 20px
 $grids: 12
 $gutter-width: 1/7
 
-%container
-  margin: 0 auto
-
 @mixin container-mobile
-  @extend %container 
   max-width: 926px
-  padding: 0 $smartphone-grid-padding
+  margin: 0 auto
+  padding-right: $smartphone-grid-padding
+  padding-left: $smartphone-grid-padding
 
 @mixin container-desktop
-  @extend %container
+  margin: 0 auto
   max-width: auto 
   width: 926px
-  padding: 0 $desktop-grid-padding 
+  padding-left: $desktop-grid-padding 
+  padding-right: $desktop-grid-padding 
 
 // Breakpoints
 $breakpoint-desktop-with-ie-fallback: 960px

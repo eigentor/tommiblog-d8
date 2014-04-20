@@ -1,8 +1,3 @@
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/_variables-mixins\.sass}line{font-family:\0000313}}
-header, main, footer[role=contentinfo], .lt-ie9 body header, .lt-ie9 body main, .lt-ie9 body footer[role=contentinfo] {
-  margin: 0 auto;
-}
-
 /*Base layout of the page */
 @media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/layout\.sass}line{font-family:\0000310}}
 body {
@@ -18,7 +13,9 @@ body {
 @media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/layout\.sass}line{font-family:\0000317}}
 header, main, footer[role=contentinfo] {
   max-width: 926px;
-  padding: 0 20px;
+  margin: 0 auto;
+  padding-right: 20px;
+  padding-left: 20px;
 }
 
 @media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/layout\.sass}line{font-family:\0000320}}
@@ -41,9 +38,11 @@ main {
 @media (min-width: 960px) {
 @media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/layout\.sass}line{font-family:\0000338}}
   body header, body main, body footer[role=contentinfo] {
+    margin: 0 auto;
     max-width: auto;
     width: 926px;
-    padding: 0 40px;
+    padding-left: 40px;
+    padding-right: 40px;
   }
 @media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/layout\.sass}line{font-family:\0000340}}
   body header {
@@ -93,9 +92,11 @@ main {
 }
 @media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/layout\.sass}line{font-family:\0000338}}
 .lt-ie9 body header, .lt-ie9 body main, .lt-ie9 body footer[role=contentinfo] {
+  margin: 0 auto;
   max-width: auto;
   width: 926px;
-  padding: 0 40px;
+  padding-left: 40px;
+  padding-right: 40px;
 }
 @media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/layout\.sass}line{font-family:\0000340}}
 .lt-ie9 body header {
