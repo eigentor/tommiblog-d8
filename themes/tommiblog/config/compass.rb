@@ -9,7 +9,7 @@ javascripts_dir = "javascripts"
 
 sass_options = {:debug_info => true}
 
-require "susy"
+require 'singularitygs'
 
 
 # You can select your preferred output style here (can be overridden via the command line):
