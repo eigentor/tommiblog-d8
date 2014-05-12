@@ -9,6 +9,8 @@ $breakpoint-no-query-fallbacks: true
 /** Base layout of the page **/
 body 
   background: lighten(#F7E1A0, 19%)
+  padding-bottom: 90px
+  min-height: 100%
 
 .l-container 
   margin: 0
@@ -24,6 +26,13 @@ header, main, footer[role=contentinfo]
 
 main 
   padding-top: 30px
+
+.footer-wrapper 
+  height: 70px
+  background: #EDE9E3
+  border-top: 1px solid #d8d8d8
+  a 
+    color: #777
 
 
 /*-------------------------------------------*/
@@ -55,7 +64,7 @@ body
         ul 
           li 
             font-family: $font-family-headlines
-            font-size: 1.2em
+            @include x-rem(font-size, 1.2)
             line-height: 1.3
             a 
               color: #888
@@ -85,3 +94,9 @@ body
           background: #eee url(../images/lupe-suche.png) no-repeat 8px center
           &:hover 
             background: #ddd url(../images/lupe-suche.png) no-repeat 8px center
+
+    /* Footer */
+    .footer-wrapper 
+      position: absolute
+      bottom: 0
+      width: 100%

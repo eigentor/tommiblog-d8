@@ -140,9 +140,11 @@
   </main>
 
   {% if page.footer %}
-    <footer role="contentinfo">
-      {{ page.footer }}
-    </footer>
+    <div class="footer-wrapper">
+      <footer role="contentinfo">
+        {{ page.footer }}
+      </footer>
+    </div>
   {% endif %}
 
 </div>{# /.l-container #}
