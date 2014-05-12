@@ -15,6 +15,7 @@ body
 
 h1, h2, h3, h4, h5, h6, h1 a, h2 a, h3 a, h4 a, h4 a, h6 a
   font-family: $font-family-headlines
+  font-weight: normal
   color: $headline-color
   letter-spacing: 0.01em
   margin-top: 0 
@@ -23,9 +24,10 @@ h1, h2, h3, h4, h5, h6, h1 a, h2 a, h3 a, h4 a, h4 a, h6 a
 
 .name-and-slogan .site-name,
 .name-and-slogan .site-name a
-  font-family: $font-family-handwritten
-  font-size: 6rem
-  color: #9B1414
+  font-family: $font-family-sitetitle
+  // font-weight: normal
+  @include x-rem(font-size, 6)
+  color: #ca0d0d
   line-height: 1
   margin-bottom: 0
   margin-top: 10px
