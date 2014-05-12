@@ -10,6 +10,7 @@ javascripts_dir = "javascripts"
 sass_options = {:debug_info => true}
 
 require 'singularitygs'
+require 'breakpoint'
 
 
 # You can select your preferred output style here (can be overridden via the command line):

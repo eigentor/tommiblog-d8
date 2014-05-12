@@ -39,12 +39,12 @@ h1, h2, h3, h4, h5, h6, h1 a, h2 a, h3 a, h4 a, h4 a, h6 a {
 /** Standard HTML Elements ** */
 @media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000337}}
 a {
-  color: #e09900;
+  color: #dda231;
   text-decoration: none;
 }
 @media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000340}}
 a:hover {
-  color: #e09900;
+  color: #dda231;
 }
 
 /*Drupal-specific Elements */
