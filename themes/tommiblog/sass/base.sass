@@ -55,7 +55,8 @@ code
 .submitted 
   color: #999
   font-family: $font-family-headlines-thin
-  margin: 3px 0 7px
+  @include x-rem(font-size, 0.83)
+  margin: 5px 0 9px
 
 /** Drupal-specific micro elements */
 
@@ -66,6 +67,9 @@ ul.links.inline
   li 
     padding: 0 10px 0 0
     @include x-rem(font-size, 0.83)
+
+p 
+  margin: 5px 0 12px
 
 
 /*-------------------------------------------*/
