@@ -23,6 +23,46 @@ header, main, footer[role=contentinfo]
   background: lighten(#F7E1A0, 10%)
   border-bottom: 1px solid #EDE2C4
   padding: 5px 0 8px
+  @include legacy-pie-clearfix
+
+header 
+  #block-tommiblog-search, #block-socialmediablockheader, #block-mainnavigation
+    display: none
+  #block-mobilemenuswitcher
+    width: 40px
+    height: 35px
+    padding: 5px
+    background: #F7E19E url(../images/menu-icon.png) no-repeat center center
+    border: 1px solid #ccc
+    @include border-radius(3px)
+    float: right
+    margin-top: 18px
+  #block-tommiblog-search
+    form 
+      margin-top: 45px
+      margin-left: 30px
+    input.form-search 
+      +border-radius(13px 0 0 13px)
+      border: 1px solid #999
+      margin-right: 0
+      float: left
+      height: 22px
+      width: 110px
+      padding: 2px 8px 2px 15px
+
+    input.form-submit 
+      position: relative
+      text-indent: -9999px
+      +border-radius(0 13px 13px 0)
+      border: 1px solid #777
+      width: 38px
+      float: left
+      padding: 2px 5px
+      height: 28px
+      border-left: 0
+      background: #eee url(../images/lupe-suche.png) no-repeat 8px center
+      &:hover 
+        background: #ddd url(../images/lupe-suche.png) no-repeat 8px center
 
 main 
   padding-top: 30px
@@ -30,14 +70,33 @@ main
 .footer-wrapper 
   background: #EDE9E3
   border-top: 1px solid #d8d8d8
+  padding-bottom: 15px
   a 
     color: #777
   footer 
     +x-rem(font-size, 0.83)
     padding-top: 10px
-    padding-bottom: 15px
     ul.menu 
       margin-left: 0
+
+/*-------------------------------------------*/
+/*-------------------------------------------*/
+/*-------------- Phablet LAYOUT -------------*/
+/*-------------------------------------------*/
+/*-------------------------------------------*/
+
+
+body
+  +breakpoint($breakpoint-phablet)
+    header 
+      #block-mobilemenuswitcher
+        margin-top: 33px
+        margin-right: 15px
+    .footer-wrapper 
+      position: absolute
+      bottom: 0
+      width: 100%
+      height: 90px
 
 
 
@@ -62,6 +121,10 @@ body
         float: left
       .block 
         float: left
+      #block-tommiblog-search, #block-socialmediablockheader, #block-mainnavigation
+        display: block
+      #block-mobilemenuswitcher 
+        display: none
       #block-socialmediablockheader
         margin-top: 10px
         img 
@@ -74,32 +137,6 @@ body
             line-height: 1.3
             a 
               color: #888
-      #block-tommiblog-search
-        form 
-          margin-top: 45px
-          margin-left: 30px
-        input.form-search 
-          +border-radius(13px 0 0 13px)
-          border: 1px solid #999
-          margin-right: 0
-          float: left
-          height: 22px
-          width: 110px
-          padding: 2px 8px 2px 15px
- 
-        input.form-submit 
-          position: relative
-          text-indent: -9999px
-          +border-radius(0 13px 13px 0)
-          border: 1px solid #777
-          width: 38px
-          float: left
-          padding: 2px 5px
-          height: 28px
-          border-left: 0
-          background: #eee url(../images/lupe-suche.png) no-repeat 8px center
-          &:hover 
-            background: #ddd url(../images/lupe-suche.png) no-repeat 8px center
 
     /* Footer */
     .footer-wrapper 
