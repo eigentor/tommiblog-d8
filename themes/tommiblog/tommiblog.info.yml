@@ -19,5 +19,3 @@ stylesheets:
     - css/base.css
     - css/node.css
 
-scripts:
-  - js/tommiblog-custom.js

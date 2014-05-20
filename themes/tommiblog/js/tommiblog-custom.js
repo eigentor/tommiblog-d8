@@ -1,14 +1,14 @@
 (function ($) {
   
-  // $(document).ready(function(){
-  //   $('body').click(function{
-  //     alert('Jo mei');
-  //   });
-
+  $(document).ready(function(){
+    
   // Open and close the main mobile menu
-    $('.region-top-wide .switch-mobile-main-menu').click(function(){
-       $('.region-top-wide .main-menu-mobile').slideToggle( "normal", function() {
-
+    $('#block-mobilemenuswitcher').click(function(){
+       $('#block-mainnavigation').slideToggle( "normal", function() {
+       });
+       $('#block-socialmediablockheader').slideToggle( "normal", function() {
+       });
+       $('#block-tommiblog-search').slideToggle( "normal", function() {
        });
        // Add the class 'active-menu' so we know the menu is in an open state.
        // If the class is already there, remove it while closing the menu.
