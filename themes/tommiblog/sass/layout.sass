@@ -9,8 +9,6 @@ $breakpoint-no-query-fallbacks: true
 /** Base layout of the page **/
 body 
   background: lighten(#F7E1A0, 19%)
-  padding-bottom: 90px
-  min-height: 100%
 
 .l-container 
   margin: 0
@@ -87,6 +85,13 @@ main
 
 body
   +breakpoint($breakpoint-phablet)
+
+    // some settings to keep the footer cleanly at the bottom
+    .l-container
+      position: relative
+      padding-bottom: 90px
+      min-height: 100%
+
     header 
       #block-mobilemenuswitcher
         margin-top: 33px
