@@ -13,7 +13,30 @@ body
 .l-container 
   margin: 0
   padding: 0
-
+.mobile-navigation
+  float: left
+  width: 250px
+  background: white
+  height: 100%
+  display: block
+  display: none
+  #block-socialmediablockheader-2
+    p 
+      margin: 0
+    img 
+      width: 48px
+      height: auto
+    span.rufzeichen 
+      margin-right: 13px
+/* float all major containers left when the mobile menu is open */
+.mobile-menu-open
+  header, main, footer[role=contentinfo]
+    float: left 
+  .mobile-navigation
+    display: block
+    position: absolute
+    z-index: 15
+  
 header, main, footer[role=contentinfo]
   +container-mobile
 
@@ -37,29 +60,41 @@ header
     @include border-radius(3px)
     float: right
     margin-top: 18px
-  #block-tommiblog-search
-    input.form-search 
-      +border-radius(13px 0 0 13px)
-      border: 1px solid #999
-      margin-right: 0
-      float: left
-      height: 22px
-      width: 110px
-      padding: 2px 8px 2px 15px
+  #block-mainnavigation 
+    ul.menu 
+      margin-left: 0
+      margin-bottom: 25px
+      li 
+        a
+          padding: 5px 8px
+          border: 1px solid #ccc
+          background: #F7E19E
+          display: block
+#block-tommiblog-search, #block-suchformular
+  margin-bottom: 15px
+  +legacy-pie-clearfix
+  input.form-search 
+    +border-radius(13px 0 0 13px)
+    border: 1px solid #999
+    margin-right: 0
+    float: left
+    height: 22px
+    width: 80%
+    padding: 2px 8px 2px 15px
 
-    input.form-submit 
-      position: relative
-      text-indent: -9999px
-      +border-radius(0 13px 13px 0)
-      border: 1px solid #777
-      width: 38px
-      float: left
-      padding: 2px 5px
-      height: 28px
-      border-left: 0
-      background: #eee url(../images/lupe-suche.png) no-repeat 8px center
-      &:hover 
-        background: #ddd url(../images/lupe-suche.png) no-repeat 8px center
+  input.form-submit 
+    position: relative
+    text-indent: -9999px
+    +border-radius(0 13px 13px 0)
+    border: 1px solid #777
+    width: 38px
+    float: left
+    padding: 2px 5px
+    height: 28px
+    border-left: 0
+    background: #eee url(../images/lupe-suche.png) no-repeat 8px center
+    &:hover 
+      background: #ddd url(../images/lupe-suche.png) no-repeat 8px center
 
 main 
   padding-top: 30px
@@ -120,7 +155,7 @@ body
       //padding-top: 20px
       .name-and-slogan 
         float: left
-        margin-right: 50px
+        margin-right: 35px
       .region-header 
         float: left
       .block 
@@ -129,24 +164,37 @@ body
         display: block
         clear: none
         border: 0
+      #block-socialmediablockheader
+        margin-top: 25px
+        margin-right: 10px
+        img 
+          margin: 0 5px
+          width: auto
+        p 
+          margin: 0
+        span.rufzeichen 
+          margin: 0
       #block-mobilemenuswitcher 
         display: none
       #block-socialmediablockheader
-        margin-top: 10px
-        img 
-          margin: 0 5px
+        
       #block-mainnavigation 
-        ul 
+        ul.menu 
           li 
             font-family: $font-family-headlines
             @include x-rem(font-size, 1.2)
             line-height: 1.3
             a 
               color: #888
+              background: none
+              border: none
+              padding: 0
       #block-tommiblog-search
         form 
           margin-top: 45px
           margin-left: 30px
+          input.form-search 
+            width: 110px
 
     /* Footer */
     .footer-wrapper 

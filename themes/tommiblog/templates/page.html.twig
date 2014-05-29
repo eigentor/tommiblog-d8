@@ -64,6 +64,12 @@
  */
 #}
 <div class="l-container">
+  {% if page.navigation %}
+      <aside class="mobile-navigation" role="complementary">
+        {{ page.navigation }}
+      </aside>
+    {% endif %}
+    
   <div class="header-background">
     <header role="banner">
       {% if logo %}

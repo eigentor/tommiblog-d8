@@ -4,7 +4,8 @@
     
   // Open and close the main mobile menu
     $('#block-mobilemenuswitcher').click(function(){
-       $('#block-mainnavigation').slideToggle( "normal", function() {
+       $('body').toggleClass('mobile-menu-open');
+       /*$('#block-mainnavigation').slideToggle( "normal", function() {
        });
        $('#block-socialmediablockheader').slideToggle( "normal", function() {
        });
@@ -16,7 +17,7 @@
           $('.region-top-wide .main-menu-mobile').removeClass('active-menu');
         } else {
          $('.region-top-wide .main-menu-mobile').addClass('active-menu');
-        } 
+        }*/
     });
 
        
