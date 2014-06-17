@@ -13,13 +13,22 @@ body
 .l-container 
   margin: 0
   padding: 0
+.name-and-slogan 
+  float: right
+  width: 80%
+  text-align: center
+.region-header
+  float: left
 .mobile-navigation
+  padding-top: 20px
+  padding-left: 7%
   float: left
   width: 250px
   background: white
   height: 100%
   display: block
   display: none
+  +box-shadow(5px 5px 5px rgba(100,100,100,0.5))
   #block-socialmediablockheader-2
     p 
       margin: 0
@@ -28,6 +37,18 @@ body
       height: auto
     span.rufzeichen 
       margin-right: 13px
+  ul.menu 
+    margin-left: 0
+    li 
+      a
+        display: block 
+        border-bottom: 1px solid #ccc
+        padding: 3px 0
+      // Evtl. dem letzten Menü-Link keinen Border-bottom geben
+      // &:last-child
+      //   a
+      //     border: none
+
 /* float all major containers left when the mobile menu is open */
 .mobile-menu-open
   header, main, footer[role=contentinfo]
@@ -71,15 +92,18 @@ header
           background: #F7E19E
           display: block
 #block-tommiblog-search, #block-suchformular
+  margin-top: 30px
   margin-bottom: 15px
   +legacy-pie-clearfix
+  form 
+    width: 90%
   input.form-search 
     +border-radius(13px 0 0 13px)
     border: 1px solid #999
     margin-right: 0
     float: left
     height: 22px
-    width: 80%
+    width: 70%
     padding: 2px 8px 2px 15px
 
   input.form-submit 
@@ -87,7 +111,7 @@ header
     text-indent: -9999px
     +border-radius(0 13px 13px 0)
     border: 1px solid #777
-    width: 38px
+    width: 15%
     float: left
     padding: 2px 5px
     height: 28px
@@ -126,11 +150,13 @@ body
       position: relative
       padding-bottom: 90px
       min-height: 100%
+    .name-and-slogan
+      text-align: left
 
     header 
       #block-mobilemenuswitcher
         margin-top: 33px
-        margin-right: 15px
+        margin-left: 15px
     .footer-wrapper 
       position: absolute
       bottom: 0
@@ -153,7 +179,8 @@ body
     header
       +legacy-pie-clearfix
       //padding-top: 20px
-      .name-and-slogan 
+      .name-and-slogan
+        width: auto 
         float: left
         margin-right: 35px
       .region-header 
@@ -190,11 +217,17 @@ body
               border: none
               padding: 0
       #block-tommiblog-search
+        margin-top: 0
         form 
           margin-top: 45px
           margin-left: 30px
           input.form-search 
             width: 110px
+        input.form-search
+          width: 80%
+          padding: 2px 8px 2px 15px
+        input.form-submit
+          width: 38px
 
     /* Footer */
     .footer-wrapper 

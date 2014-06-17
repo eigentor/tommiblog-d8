@@ -36,9 +36,8 @@ h1, h2, h3, h4, h5, h6, h1 a, h2 a, h3 a, h4 a, h4 a, h6 a {
 @media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000331}}
 .name-and-slogan {
   margin-top: 15px;
-  float: left;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000334}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000333}}
 .name-and-slogan .site-name, .name-and-slogan .site-name a {
   font-family: maiden_orangeregular, times, serif;
   font-weight: normal;
@@ -50,23 +49,23 @@ h1, h2, h3, h4, h5, h6, h1 a, h2 a, h3 a, h4 a, h4 a, h6 a {
 }
 
 /** Standard HTML Elements ** */
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000345}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000344}}
 a {
   color: #dda231;
   text-decoration: none;
 }
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000348}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000347}}
 a:hover {
   color: #dda231;
 }
 
 /*Drupal-specific Elements */
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000352}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000351}}
 code {
   margin-bottom: 10px;
 }
 
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000355}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000354}}
 .submitted {
   color: #999999;
   font-family: oswaldlight, arial, helvetica, sans-serif;
@@ -76,19 +75,19 @@ code {
 }
 
 /*Drupal-specific micro elements */
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000363}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000362}}
 a.feed-icon {
   display: none;
 }
 
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000367}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000366}}
 ul.links.inline li {
   padding: 0 10px 0 0;
   font-size: 14.94px;
   font-size: 0.83rem;
 }
 
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000371}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000370}}
 p {
   margin: 5px 0 12px;
 }
@@ -99,7 +98,7 @@ p {
 /*------------------------------------------- */
 /*------------------------------------------- */
 @media (min-width: 480px) {
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000384}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000383}}
   body .name-and-slogan .site-name, body .name-and-slogan .site-name a {
     font-size: 81px;
     font-size: 4.5rem;
@@ -112,20 +111,20 @@ p {
 /*------------------------------------------- */
 /*------------------------------------------- */
 @media (min-width: 960px) {
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000395}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000394}}
   body {
     /* Headlines */
   }
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\00003100}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000399}}
   body h2 {
     font-size: 34.2px;
     font-size: 1.9rem;
   }
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\00003104}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\00003103}}
   body article h2 {
     margin-bottom: 2px;
   }
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\00003108}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\00003107}}
   body .name-and-slogan .site-name, body .name-and-slogan .site-name a {
     font-size: 108px;
     font-size: 6rem;
