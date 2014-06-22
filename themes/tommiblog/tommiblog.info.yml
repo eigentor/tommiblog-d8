@@ -19,5 +19,12 @@ stylesheets:
     - css/base.css
     - css/node.css
 
-scripts:
-  - js/tommiblog-custom.js
+regions: 
+  header: 'Header'
+  navigation: 'Navigation'
+  help: 'help'
+  highlighted: 'highlighted'
+  content: 'Content' 
+  sidebar_first: 'Sidebar'
+  sidebar_second: 'Sidebar' 
+  footer: 'Footer' 

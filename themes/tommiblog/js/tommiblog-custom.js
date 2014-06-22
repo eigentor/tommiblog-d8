@@ -1,8 +1,15 @@
 (function ($) {
   
   $(document).ready(function(){
-    $('body').click(function{
-      alert('Jo mei');
+    
+  // Open and close the main mobile menu
+    $('#block-mobilemenuswitcher').click(function(){
+       $('body').toggleClass('mobile-menu-open');
+       
+    });
+    $('#block-mobilemenuswitcher-2').click(function(){
+       $('body').toggleClass('mobile-menu-open');
+       
     });
 
        

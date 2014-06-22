@@ -1,0 +1,8 @@
+tommiblog:
+  version: VERSION
+  js:
+    # Core.
+    js/tommiblog-custom.js: {}
+  dependencies:
+    - core/jquery
+    - core/jquery.once
