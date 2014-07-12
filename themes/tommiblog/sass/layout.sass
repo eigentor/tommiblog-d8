@@ -159,6 +159,14 @@ main
     ul.menu 
       margin-left: 0
 
+/* Login-Formular */
+.page-user
+  form#user-login-form  
+    input 
+      width: 100%
+
+  
+
 /*-------------------------------------------*/
 /*-------------------------------------------*/
 /*-------------- Phablet LAYOUT -------------*/
@@ -267,3 +275,18 @@ body
         ul.menu 
           li 
             padding-top: 0
+
+    &.page-user
+      form#user-login-form  
+        label 
+          float: left
+          width: 130px
+        input 
+          width: auto
+          &#edit-submit 
+            margin-left: 130px
+        .description 
+          margin-left: 130px
+          color: #777
+          margin-top: 2px
+          @include x-rem(font-size, 0.75)
