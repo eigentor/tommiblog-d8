@@ -147,10 +147,6 @@ main
   background: #EDE9E3
   border-top: 1px solid #d8d8d8
   padding-bottom: 15px
-  position: absolute
-  bottom: 0
-  width: 100%
-  min-height: 90px
   a 
     color: #777
   footer 
@@ -164,6 +160,20 @@ main
   form#user-login-form  
     input 
       width: 100%
+
+/* Kommentare */
+#comments 
+  .comment 
+    background: #eee
+    padding: 25px
+    margin: 25px 0
+    border: 1px solid #ddd
+#comment-form
+  background: #e7e7e7
+  padding: 25px
+  margin: 25px 0
+  #edit-name 
+    display: none
 
   
 
@@ -264,7 +274,7 @@ body
       position: absolute
       bottom: 0
       width: 100%
-      height: 70px
+      min-height: 90px
       #block-footermessage 
         float: left
       #block-tommiblog-footer 
@@ -290,3 +300,10 @@ body
           color: #777
           margin-top: 2px
           @include x-rem(font-size, 0.75)
+
+    #comments .comment, #comment-form 
+      margin-left: -25px
+      margin-right: -25px
+  
+
+    
