@@ -1,2 +1,17 @@
 @import "_variables-mixins.sass"
 
+.node 
+  +legacy-pie-clearfix
+  .submitted 
+    float: left
+  .field-node--field-tags 
+    float: right
+  .field-node--field-separator-dummy 
+    clear: both
+
+.field-node--field-image 
+  clear: both
+  float: left
+  margin: 5px 15px 0 0
+  img 
+    max-width: 100%
