@@ -7,14 +7,19 @@ $breakpoint-no-queries: false
 $breakpoint-no-query-fallbacks: true
 
 .node 
+  .field-node--field-image
+    img 
+      max-width: 100%
+      height: auto
   .field-node--field-tags
+    margin-bottom: 20px
     .field-item
       display: inline-block 
       a
         color: #777
         //display: inline-block
         +x-rem(font-size, 0.75)
-        margin: 0 0 0 10px
+        margin: 0 10px 0 0
         padding: 2px 0.5em
         //background: #ccc
         border: 1px dotted #aaa
@@ -31,13 +36,13 @@ $breakpoint-no-query-fallbacks: true
 
 .view-frontpage 
   .views-row 
-    margin-bottom: 20px
-    padding-bottom: 10px
+    margin-bottom: 15px
+    padding-bottom: 20px
     border-bottom: 1px dashed #bbb
     ul.links.inline 
       display: block
       margin-top: -5px
-      margin-bottom: 5px
+      margin-bottom: 0
           
 
 
@@ -60,10 +65,13 @@ body
         float: right
       .field-node--field-separator-dummy 
         clear: both
+    .field-node--field-tags
+      margin-bottom: 5px
+      .field-item 
+        a
+          margin: 0 0 0 10px
 
     .field-node--field-image 
       clear: both
       float: left
       margin: 5px 15px 0 0
-      img 
-        max-width: 100%
