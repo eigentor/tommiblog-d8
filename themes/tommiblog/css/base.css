@@ -98,25 +98,13 @@ input.form-text {
   padding: 2px 5px;
 }
 
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000383}}
-.imagefloatleft {
-  float: left;
-  margin: 5px 15px 0 0;
-}
-
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000387}}
-.imagefloatright {
-  float: right;
-  margin: 5px 0 0 15px;
-}
-
 /*------------------------------------------- */
 /*------------------------------------------- */
 /*-------------- Phablet LAYOUT ------------- */
 /*------------------------------------------- */
 /*------------------------------------------- */
 @media (min-width: 480px) {
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\00003101}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\0000394}}
   body .name-and-slogan .site-name, body .name-and-slogan .site-name a {
     font-size: 81px;
     font-size: 4.5rem;
@@ -129,23 +117,33 @@ input.form-text {
 /*------------------------------------------- */
 /*------------------------------------------- */
 @media (min-width: 960px) {
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\00003112}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\00003105}}
   body {
     /* Headlines */
   }
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\00003117}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\00003110}}
   body h2 {
     font-size: 34.2px;
     font-size: 1.9rem;
   }
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\00003121}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\00003114}}
   body article h2 {
     margin-bottom: 2px;
   }
-@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\00003125}}
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\00003118}}
   body .name-and-slogan .site-name, body .name-and-slogan .site-name a {
     font-size: 108px;
     font-size: 6rem;
     margin-left: -5px;
+  }
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\00003122}}
+  body .imagefloatleft {
+    float: left;
+    margin: 5px 15px 0 0;
+  }
+@media -sass-debug-info{filename{font-family:file\:\/\/F\:\/xampp\/htdocs\/rufzeichen\/tommiblog-d8\/themes\/tommiblog\/sass\/base\.sass}line{font-family:\00003126}}
+  body .imagefloatright {
+    float: right;
+    margin: 5px 0 0 15px;
   }
 }
